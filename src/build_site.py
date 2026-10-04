@@ -100,13 +100,15 @@ def main():
     payload=attach_chart_data(payload,df,variables)
 
     tpl=(ROOT/"templates/technical_dashboard.html").read_text(encoding="utf-8")
-    (site/"index.html").write_text(
-        tpl.replace("__FORECAST_PAYLOAD__",json.dumps(payload,ensure_ascii=False)),
-        encoding="utf-8"
+    chart_js=(ROOT/"node_modules/chart.js/dist/chart.umd.js").read_text(encoding="utf-8").replace("</script","<\\/script")
+    dashboard_js=(ROOT/"templates/technical_dashboard.js").read_text(encoding="utf-8").replace("</script","<\\/script")
+    html=(tpl
+        .replace("__FORECAST_PAYLOAD__",json.dumps(payload,ensure_ascii=False))
+        .replace("__CHART_JS__",chart_js)
+        .replace("__DASHBOARD_JS__",dashboard_js)
     )
+    (site/"index.html").write_text(html,encoding="utf-8")
     shutil.copy2(ROOT/"templates/admin.html",site/"admin.html")
-    shutil.copy2(ROOT/"templates/technical_dashboard.js",site/"technical_dashboard.js")
-    shutil.copy2(ROOT/"node_modules/chart.js/dist/chart.umd.js",site/"chart.umd.js")
     (site/".nojekyll").write_text("",encoding="utf-8")
 
     try:

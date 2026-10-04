@@ -2,7 +2,7 @@ try{
 const DB=window.DB||{items:[]};
 const good=(DB.items||[]).filter(function(x){return !x.error});
 let current=(good.find(function(x){return x.code==="AAMFI00"})||good[0]||{}).code;
-let priceChart,rsiChart,macdChart,probChart;
+let priceChart,rsiChart,macdChart,probChart,captureChart;
 const state={range:"3M",ma5:true,ma20:true,ma60:true,ma120:true,boll:true,forecast:true};
 
 const HAS_CHART = typeof window.Chart !== "undefined";
@@ -16,6 +16,27 @@ function el(id){return document.getElementById(id)}
 function fmt(x){const n=Number(x);return Number.isFinite(n)?n.toLocaleString(undefined,{maximumFractionDigits:n>=1000?1:2}):"—"}
 function cls(b){return b==="BULLISH"?"up":b==="BEARISH"?"dn":"flat"}
 function shortDate(s){const d=new Date(String(s)+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate()}
+function prettyDate(s){
+  const d=new Date(String(s)+"T00:00:00"),days=["일","월","화","수","목","금","토"];
+  return (d.getMonth()+1)+"/"+d.getDate()+"("+days[d.getDay()]+")";
+}
+function capturePrice(x){
+  const n=Number(x);return Number.isFinite(n)?n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";
+}
+function normalCdf(z){
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989423*Math.exp(-z*z/2);
+  let p=1-d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>=0?p:1-p;
+}
+function levelProbability(h,level,above){
+  if(!h||!Number.isFinite(Number(level)))return null;
+  const center=Number(h.center),lo=Number(h.lo80),hi=Number(h.hi80);
+  const sigma=(hi-lo)/(2*1.281551565545);
+  if(!Number.isFinite(sigma)||sigma<=0)return null;
+  const cdf=normalCdf((Number(level)-center)/sigma);
+  return Math.max(0,Math.min(100,(above?1-cdf:cdf)*100));
+}
 function rangeBars(freq,r){
   if(r==="ALL")return 9999;
   const d={D:{"1M":22,"3M":66,"6M":132,"1Y":260},W:{"1M":4,"3M":13,"6M":26,"1Y":52}};
@@ -294,7 +315,7 @@ function drawPrice(x){
       legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:11,weight:"700"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
-      forecastSplit:{index:Math.max(0,d.n-1)},forecastTable:{enabled:state.forecast,rows:x.horizons||[]}
+      forecastSplit:{index:Math.max(0,d.n-1)}
     },
     scales:{
       x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:11,weight:"600"},maxRotation:0}},
@@ -442,6 +463,16 @@ function drawProbability(x){
     }
   });
 }
+function renderForecastTableBelow(x){
+  const box=el("forecastTableBelow");if(!box)return;
+  const hz=x.horizons||[];
+  if(!state.forecast||!hz.length){box.innerHTML="";box.style.display="none";return;}
+  box.style.display="block";
+  box.innerHTML='<div class="forecastTableBelowTitle">예측 가격 · 그래프 하단 정보</div><div class="forecastTableGrid">'+
+    hz.map(function(h){return '<div class="forecastMiniCell"><small>'+h.label+' · '+(h.date?shortDate(h.date):"")+'</small><b>'+fmt(h.center)+'</b><span>80% '+fmt(h.lo80)+'–'+fmt(h.hi80)+'</span></div>';}).join("")+
+    '</div>';
+}
+
 function renderSide(x){
   el("signal").textContent=x.procurementSignal;el("signal").className="signalBig "+cls(x.bias);el("confbar").style.width=x.confidence+"%";
   const hz=x.horizons||[],h=hz[Math.min(2,hz.length-1)];
@@ -482,7 +513,7 @@ function render(){
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);
   el("bias").textContent=x.bias;el("bias").className=cls(x.bias);el("confidence").textContent=x.confidence+"%";el("regime").textContent=x.regime;
   el("headlineBias").textContent=tech===x.bias?"기술·예측 "+tech+" · 일치":"기술 "+tech+" / 예측 "+x.bias;
-  renderSignals(x);renderHorizon(x);renderSide(x);
+  renderSignals(x);renderHorizon(x);renderSide(x);renderForecastTableBelow(x);
   if(HAS_CHART){
     try{ drawPrice(x); }
     catch(err){
@@ -494,12 +525,149 @@ function render(){
     if(box){box.style.display="block";box.textContent="Chart.js failed to load. Market data and forecast values are still available below.";}
   }
 }
+
+function capturePair(x){
+  const hz=x.horizons||[];if(!hz.length)return [];
+  const first=hz[0];
+  const target=x.freq==="W"?4:5;
+  let second=hz.reduce(function(best,h){return Math.abs((Number(h.bars)||1)-target)<Math.abs((Number(best.bars)||1)-target)?h:best;},hz[0]);
+  if(second===first&&hz.length>1)second=hz[Math.min(hz.length-1,2)];
+  return [first,second];
+}
+function captureOutlookHtml(x,h,index){
+  if(!h)return "";
+  const up=Number(h.up||0)*100,flat=Number(h.flat||0)*100,down=Number(h.down||0)*100,diff=up-down;
+  const title=x.freq==="W"?(index===0?"다음 평가 · "+h.label:(Number(h.bars)||1)+"주 뒤 · "+h.label):(index===0?"다음 거래일 · "+h.label:"1주 뒤 · "+h.label);
+  const lead=diff>=0?"상승 확률이 하락보다 "+Math.abs(diff).toFixed(1)+"%p 높음":"하락 확률이 상승보다 "+Math.abs(diff).toFixed(1)+"%p 높음";
+  const leadColor=diff>=0?"#e84949":"#2f7bd4";
+  return '<section class="captureOutlook">'+
+    '<div class="captureSectionTitle">'+title+' · '+prettyDate(h.date)+'</div>'+
+    '<div class="captureProbBar"><div class="down" style="width:'+down+'%"></div><div class="flat" style="width:'+flat+'%"></div><div class="up" style="width:'+up+'%"></div></div>'+
+    '<div class="captureProbLabels"><span class="down">▼ 하락 '+down.toFixed(1)+'%</span><span class="flat">보합 '+flat.toFixed(1)+'%</span><span class="up">▲ 상승 '+up.toFixed(1)+'%</span></div>'+
+    '<div class="captureProbComment" style="color:'+leadColor+'">'+lead+'</div>'+
+    '<div class="captureProbMeta">기대 종가 '+capturePrice(h.center)+' · 80% 예상범위 '+capturePrice(h.lo80)+'–'+capturePrice(h.hi80)+'</div>'+
+  '</section>';
+}
+function captureLevelsHtml(x,h1,h2){
+  const hist=x.history||[],last=hist.length?hist[hist.length-1]:{},sc=x.scenarios||{};
+  const candidates=[
+    {level:sc.bull&&Number(sc.bull.trigger),label:"저항선",above:true,dir:"up"},
+    {level:Number(last.bbUpper),label:"볼린저 상단",above:true,dir:"up"},
+    {level:sc.bear&&Number(sc.bear.trigger),label:"지지선",above:false,dir:"down"},
+    {level:Number(last.ma20),label:"20일선",above:false,dir:"down"}
+  ];
+  const rows=[];const used=[];
+  candidates.forEach(function(r){
+    if(!Number.isFinite(r.level))return;
+    if(used.some(function(v){return Math.abs(v-r.level)/Math.max(1,Math.abs(r.level))<0.002;}))return;
+    used.push(r.level);rows.push(r);
+  });
+  return '<div class="head"></div><div class="head">'+(h1?h1.label:"")+'</div><div class="head">'+(h2?h2.label:"")+'</div>'+
+    rows.map(function(r){
+      const p1=levelProbability(h1,r.level,r.above),p2=levelProbability(h2,r.level,r.above);
+      const arrow=r.above?"▲":"▼",verb=r.above?"넘어 마감":"깨고 마감";
+      return '<div class="level '+r.dir+'">'+arrow+' '+capturePrice(r.level)+' '+r.label+' '+verb+'</div>'+
+        '<div class="pct '+r.dir+'">'+(p1==null?"—":Math.round(p1)+"%")+'</div>'+
+        '<div class="pct '+r.dir+'">'+(p2==null?"—":Math.round(p2)+"%")+'</div>';
+    }).join("");
+}
+function drawCaptureChart(x,pair){
+  if(!HAS_CHART)return;
+  if(captureChart)captureChart.destroy();
+  const hist=(x.history||[]).slice(-40),labels=hist.map(function(r){return shortDate(r.date)});
+  const actual=hist.map(function(r){return r.price}),ma20=hist.map(function(r){return r.ma20});
+  const future=pair.filter(Boolean),n=labels.length,last=actual[actual.length-1];
+  future.forEach(function(h){labels.push(h.date?shortDate(h.date):h.label);});
+  const pad=Array(Math.max(0,n-1)).fill(null);
+  const fc=pad.concat([last],future.map(function(h){return h.center}));
+  const hi=pad.concat([last],future.map(function(h){return h.hi80}));
+  const lo=pad.concat([last],future.map(function(h){return h.lo80}));
+  const ext=function(a){return a.concat(Array(future.length).fill(null));};
+  captureChart=new Chart(el("captureChart"),{type:"line",data:{labels:labels,datasets:[
+    {label:"종가",data:ext(actual),borderColor:"#5860ff",backgroundColor:"#5860ff",borderWidth:4,pointRadius:0,tension:.12,spanGaps:true},
+    {label:"20일선",data:ext(ma20),borderColor:"#2877d6",backgroundColor:"#2877d6",borderWidth:1.8,pointRadius:0,tension:.12,spanGaps:true},
+    {label:"예측 상단",data:hi,borderColor:"rgba(232,73,73,.35)",borderWidth:1,borderDash:[4,3],pointRadius:0,spanGaps:true},
+    {label:"예측 하단",data:lo,borderColor:"rgba(47,123,212,.35)",borderWidth:1,borderDash:[4,3],pointRadius:0,fill:"-1",backgroundColor:"rgba(130,150,180,.12)",spanGaps:true},
+    {label:"예측",data:fc,borderColor:"#e84949",backgroundColor:"#e84949",borderWidth:3,pointRadius:5,spanGaps:true}
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{
+    x:{grid:{display:false},ticks:{color:"#666",maxTicksLimit:7,font:{size:13}}},
+    y:{position:"right",grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#666",font:{size:13}}}
+  }}});
+}
+function fitCapturePreview(){
+  const sheet=el("captureSheet"),wrap=el("captureScaleWrap"),preview=el("capturePreview");if(!sheet||!wrap||!preview)return;
+  sheet.style.transform="none";
+  const scale=Math.min(1,Math.max(.28,(preview.clientWidth-18)/1080));
+  sheet.style.transformOrigin="top left";sheet.style.transform="scale("+scale+")";
+  wrap.style.width=(1080*scale)+"px";wrap.style.height=(sheet.scrollHeight*scale)+"px";
+}
+function populateCapture(x){
+  const pv=productView(x),hist=x.history||[],last=hist.length?hist[hist.length-1]:{},prev=hist.length>1?hist[hist.length-2]:null;
+  const change=prev&&Number(prev.price)?((Number(x.last)/Number(prev.price)-1)*100):0,pair=capturePair(x),h1=pair[0],h2=pair[1];
+  el("capTitle").textContent=pv.short+" ("+pv.market+") 기술적 분석";
+  el("capSub").textContent=prettyDate(x.lastDate)+" 종가 "+capturePrice(x.last)+" ("+(change>=0?"+":"")+change.toFixed(2)+"%) · "+priceUnit(x);
+  el("capOutlooks").innerHTML=captureOutlookHtml(x,h1,0)+captureOutlookHtml(x,h2,1);
+  el("capLevels").innerHTML=captureLevelsHtml(x,h1,h2);
+  const ma60=Number(last.ma60),above60=Number(x.last)>=ma60,rsi=Number(last.rsi),macd=Number(last.macd),sig=Number(last.macdSignal);
+  el("capTech").textContent="지표: 60일선 "+(above60?"위":"아래")+" · RSI "+(Number.isFinite(rsi)?rsi.toFixed(0):"—")+" · MACD "+(Number.isFinite(macd)&&Number.isFinite(sig)?(macd>=sig?"시그널 위":"시그널 아래"):"—");
+  const ex=x.outlookExplanation||{},sc=x.scenarios||{};
+  el("capConclusion").textContent=ex.summary||("현재 "+((x.technicalState||{}).label||"NEUTRAL")+" 기술상태이며, 가까운 지지는 "+fmt(sc.bear&&sc.bear.trigger)+" / 저항은 "+fmt(sc.bull&&sc.bull.trigger)+"입니다.");
+  el("capMetaFooter").textContent="데이터 평가가격 입력값 · "+(DB.generatedBy||"Price-Forecast-GPT")+" · 기준 "+x.lastDate+" · 생성 "+new Date().toLocaleString("ko-KR");
+  drawCaptureChart(x,pair);
+  requestAnimationFrame(function(){fitCapturePreview();});
+}
+function openCaptureMode(){
+  const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;
+  populateCapture(x);el("captureModal").classList.add("open");el("captureModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+  setTimeout(fitCapturePreview,50);
+}
+function closeCaptureMode(){
+  el("captureModal").classList.remove("open");el("captureModal").setAttribute("aria-hidden","true");document.body.style.overflow="";
+}
+async function makeCaptureCanvas(){
+  if(typeof window.html2canvas!=="function")throw new Error("PNG 생성 모듈을 불러오지 못했습니다.");
+  const sheet=el("captureSheet"),oldTransform=sheet.style.transform,oldOrigin=sheet.style.transformOrigin;
+  sheet.style.transform="none";sheet.style.transformOrigin="top left";
+  try{return await window.html2canvas(sheet,{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:1080,windowWidth:1080});}
+  finally{sheet.style.transform=oldTransform;sheet.style.transformOrigin=oldOrigin;}
+}
+function captureFilename(){
+  const x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
+  return (pv.short+"_"+pv.market+"_"+x.lastDate).replace(/[^A-Za-z0-9가-힣_-]+/g,"_")+".png";
+}
+async function saveCapturePng(){
+  const canvas=await makeCaptureCanvas(),a=document.createElement("a");a.download=captureFilename();a.href=canvas.toDataURL("image/png");a.click();
+}
+async function shareCapturePng(){
+  const canvas=await makeCaptureCanvas(),blob=await new Promise(function(resolve){canvas.toBlob(resolve,"image/png");});
+  if(!blob)throw new Error("PNG 생성에 실패했습니다.");
+  const file=new File([blob],captureFilename(),{type:"image/png"}),x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
+  if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+    await navigator.share({title:pv.short+" "+pv.market+" 전망",text:"PETROCHEM FORECAST ENGINE 공유카드",files:[file]});return;
+  }
+  if(navigator.clipboard&&window.ClipboardItem){
+    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+    alert("공유 기능을 지원하지 않는 환경이라 PNG를 클립보드에 복사했습니다.");return;
+  }
+  const a=document.createElement("a");a.download=captureFilename();a.href=URL.createObjectURL(blob);a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+  alert("이 브라우저는 파일 공유를 지원하지 않아 PNG로 저장했습니다.");
+}
+function captureError(err){alert("캡쳐 처리 중 오류: "+(err&&err.message?err.message:String(err)));}
+
 document.querySelectorAll(".ctl.range").forEach(function(b){b.onclick=function(){
   state.range=b.dataset.range;document.querySelectorAll(".ctl.range").forEach(function(x){x.classList.toggle("active",x.dataset.range===state.range)});render();
 }});
 document.querySelectorAll(".ctl.overlay").forEach(function(b){b.onclick=function(){
   const k=b.dataset.overlay;state[k]=!state[k];b.classList.toggle("active",state[k]);render();
 }});
+el("captureModeBtn").onclick=openCaptureMode;
+el("captureCloseBtn").onclick=closeCaptureMode;
+el("captureSaveBtn").onclick=function(){saveCapturePng().catch(captureError);};
+el("captureShareBtn").onclick=function(){shareCapturePng().catch(captureError);};
+el("captureModal").addEventListener("click",function(e){if(e.target===el("captureModal"))closeCaptureMode();});
+window.addEventListener("resize",function(){if(el("captureModal").classList.contains("open"))fitCapturePreview();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&el("captureModal").classList.contains("open"))closeCaptureMode();});
+
 render();
 }catch(err){
   const b=document.getElementById("runtimeError");

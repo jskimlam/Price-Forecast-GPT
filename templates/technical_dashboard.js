@@ -657,17 +657,41 @@ function saveBlobAsFile(blob){
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.download=captureFilename();a.href=url;a.click();
   setTimeout(function(){URL.revokeObjectURL(url)},1200);
 }
-async function saveCapturePng(){
-  const blob=captureAssetBlob||await prepareCaptureAsset();saveBlobAsFile(blob);
+function blobToDataUrl(blob){
+  return new Promise(function(resolve,reject){
+    const reader=new FileReader();
+    reader.onload=function(){resolve(reader.result)};
+    reader.onerror=reject;
+    reader.readAsDataURL(blob);
+  });
 }
-function shareCapturePng(){
-  const blob=captureAssetBlob;if(!blob){captureError(new Error("공유 이미지를 준비 중입니다. 잠시 후 다시 눌러주세요."));return;}
-  const file=new File([blob],captureFilename(),{type:"image/png"}),x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
+async function saveCapturePng(){
+  const blob=captureAssetBlob||await prepareCaptureAsset();
+  if(window.AndroidBridge&&typeof window.AndroidBridge.savePng==="function"){
+    const dataUrl=await blobToDataUrl(blob);
+    window.AndroidBridge.savePng(dataUrl,captureFilename());
+    return;
+  }
+  saveBlobAsFile(blob);
+}
+async function shareCapturePng(){
+  const blob=captureAssetBlob;if(!blob)throw new Error("공유 이미지를 준비 중입니다. 잠시 후 다시 눌러주세요.");
+  const x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
+  if(window.AndroidBridge&&typeof window.AndroidBridge.sharePng==="function"){
+    const dataUrl=await blobToDataUrl(blob);
+    window.AndroidBridge.sharePng(dataUrl,captureFilename(),pv.short+" "+pv.market+" 전망");
+    return;
+  }
+  const file=new File([blob],captureFilename(),{type:"image/png"});
   if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-    navigator.share({title:pv.short+" "+pv.market+" 전망",text:"PETROCHEM FORECAST ENGINE 공유카드",files:[file]}).catch(function(err){if(err&&err.name!=="AbortError")captureError(err);});return;
+    try{await navigator.share({title:pv.short+" "+pv.market+" 전망",text:"PETROCHEM FORECAST ENGINE 공유카드",files:[file]});}
+    catch(err){if(err&&err.name!=="AbortError")throw err;}
+    return;
   }
   if(navigator.clipboard&&window.ClipboardItem){
-    navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).then(function(){alert("PNG를 클립보드에 복사했습니다.");}).catch(function(){saveBlobAsFile(blob);alert("공유 기능을 지원하지 않아 PNG로 저장했습니다.");});return;
+    try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);alert("PNG를 클립보드에 복사했습니다.");}
+    catch(err){saveBlobAsFile(blob);alert("공유 기능을 지원하지 않아 PNG로 저장했습니다.");}
+    return;
   }
   saveBlobAsFile(blob);alert("이 브라우저는 파일 공유를 지원하지 않아 PNG로 저장했습니다.");
 }
@@ -682,7 +706,7 @@ document.querySelectorAll(".ctl.overlay").forEach(function(b){b.onclick=function
 el("captureModeBtn").onclick=openCaptureMode;
 el("captureCloseBtn").onclick=closeCaptureMode;
 el("captureSaveBtn").onclick=function(){saveCapturePng().catch(captureError);};
-el("captureShareBtn").onclick=shareCapturePng;
+el("captureShareBtn").onclick=function(){shareCapturePng().catch(captureError);};
 el("captureModal").addEventListener("click",function(e){if(e.target===el("captureModal"))closeCaptureMode();});
 window.addEventListener("resize",function(){if(el("captureModal").classList.contains("open"))fitCapturePreview();});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&el("captureModal").classList.contains("open"))closeCaptureMode();});

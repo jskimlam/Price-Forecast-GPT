@@ -1,1 +1,272 @@
-[{"code":"NMCL001","label":"WTI NYMEX","name":"NYMEX Light Sweet Crude Settlement Mo01","unit":"BBL","currency":"USD","group":"Energy","freq":"D","target":true},{"code":"PAAAD00","label":"Naphtha CFR Japan","name":"Naphtha C+F Japan Cargo $/mt (NextGen MOC)","unit":"MT","currency":"USD","group":"Energy","freq":"D","target":true},{"code":"AAMFL00","label":"Styrene FOB Korea","name":"Styrene FOB Korea Marker LC 90 days","unit":"MT","currency":"USD","group":"Styrene","freq":"D","target":false},{"code":"PHACB00","label":"Styrene CFR Taiwan","name":"Styrene CFR Taiwan","unit":"MT","currency":"USD","group":"Styrene","freq":"D","target":false},{"code":"AAMFI00","label":"Styrene CFR China","name":"Styrene CFR China Marker LC 90 days","unit":"MT","currency":"USD","group":"Styrene","freq":"D","target":true},{"code":"STYFC00","label":"Styrene FOB China","name":"Styrene Monomer FOB China Marker","unit":"MT","currency":"USD","group":"Styrene","freq":"D","target":false},{"code":"AAOTU00","label":"Styrene East China (CNY)","name":"Styrene East China Prompt Marker Yuan/mt","unit":"MT","currency":"CNY","group":"Styrene","freq":"D","target":false},{"code":"AAOQP00","label":"Styrene FOB ARA","name":"Styrene FOB ARA","unit":"MT","currency":"USD","group":"Styrene","freq":"D","target":false},{"code":"AAIKW00","label":"Styrene FOB USG","name":"Styrene FOB USG cts/lb","unit":"LB","currency":"USC","group":"Styrene","freq":"D","target":false},{"code":"AAOTM00","label":"Ethylene CFR NE Asia","name":"Ethylene CFR NE Asia","unit":"MT","currency":"USD","group":"Olefins","freq":"W","target":true},{"code":"PHASM05","label":"Benzene FOB Korea","name":"Benzene FOB Korea Marker","unit":"MT","currency":"USD","group":"Aromatics","freq":"D","target":true},{"code":"AAOAX00","label":"Benzene CIF ARA","name":"Benzene CIF ARA","unit":"MT","currency":"USD","group":"Aromatics","freq":"D","target":false},{"code":"AAKYD00","label":"Benzene FOB USG","name":"Benzene FOB USG Mo02 cts/gal","unit":"GAL","currency":"USC","group":"Aromatics","freq":"D","target":false},{"code":"AAWWK00","label":"Propylene CFR China","name":"Propylene Poly Grade CFR China","unit":"MT","currency":"USD","group":"Olefins","freq":"W","target":true},{"code":"PHASO05","label":"Toluene FOB Korea","name":"Toluene FOB Korea Marker","unit":"MT","currency":"USD","group":"Aromatics","freq":"D","target":false},{"code":"PHAOO00","label":"ACN CFR FE Asia","name":"ACN CFR FE Asia Weekly","unit":"MT","currency":"USD","group":"Acrylonitrile","freq":"W","target":true},{"code":"AAWWM00","label":"Butadiene FOB Korea","name":"Butadiene FOB Korea","unit":"MT","currency":"USD","group":"Butadiene","freq":"D","target":false},{"code":"AAWWL00","label":"Butadiene CFR China","name":"Butadiene CFR China","unit":"MT","currency":"USD","group":"Butadiene","freq":"W","target":false},{"code":"BTNEA00","label":"Butadiene CFR NE Asia","name":"Butadiene CFR North East Asia","unit":"MT","currency":"USD","group":"Butadiene","freq":"D","target":true},{"code":"AAWWU00","label":"Butadiene China Domestic","name":"Butadiene China Domestic (Ex-Tank) Yuan/mt","unit":"MT","currency":"CNY","group":"Butadiene","freq":"D","target":false},{"code":"AAVCC00","label":"Freight USG-Korea 10-12kt","name":"Liquid Chemicals Freight USG-Korea 10-12 kt (daily)","unit":"MT","currency":"USD","group":"Freight","freq":"D","target":false},{"code":"AAVCA00","label":"Freight Korea-East China 5kt","name":"Liquid Chemicals Freight Korea-East China 5 kt (daily)","unit":"MT","currency":"USD","group":"Freight","freq":"D","target":false},{"code":"PCACG00","label":"WTI Cushing Mo01","name":"WTI Cushing Mo01","unit":"BBL","currency":"USD","group":"Energy","freq":"D","target":false},{"code":"PHBIF00","label":"PP Inj CFR FE Asia","name":"PP Inj CFR FE Asia","unit":"MT","currency":"USD","group":"Resins","freq":"D","target":true},{"code":"PHAIL00","label":"PS GP CFR China","name":"PS G-P CFR China Weekly","unit":"MT","currency":"USD","group":"Resins","freq":"W","target":true},{"code":"PHAIR00","label":"HIPS CFR China","name":"HIPS CFR China Weekly","unit":"MT","currency":"USD","group":"Resins","freq":"W","target":true},{"code":"PHAHF00","label":"ABS Inj CFR China","name":"ABS Inj CFR China Weekly","unit":"MT","currency":"USD","group":"Resins","freq":"W","target":true}]
+[
+  {
+    "code": "NMCL001",
+    "label": "WTI NYMEX",
+    "name": "NYMEX Light Sweet Crude Settlement Mo01",
+    "unit": "BBL",
+    "currency": "USD",
+    "group": "Energy",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "PAAAD00",
+    "label": "Naphtha CFR Japan",
+    "name": "Naphtha C+F Japan Cargo $/mt (NextGen MOC)",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Energy",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "AAMFL00",
+    "label": "Styrene FOB Korea",
+    "name": "Styrene FOB Korea Marker LC 90 days",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "PHACB00",
+    "label": "Styrene CFR Taiwan",
+    "name": "Styrene CFR Taiwan",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAMFI00",
+    "label": "Styrene CFR China",
+    "name": "Styrene CFR China Marker LC 90 days",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Styrene",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "STYFC00",
+    "label": "Styrene FOB China",
+    "name": "Styrene Monomer FOB China Marker",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAOTU00",
+    "label": "Styrene East China (CNY)",
+    "name": "Styrene East China Prompt Marker Yuan/mt",
+    "unit": "MT",
+    "currency": "CNY",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAOQP00",
+    "label": "Styrene FOB ARA",
+    "name": "Styrene FOB ARA",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAIKW00",
+    "label": "Styrene FOB USG",
+    "name": "Styrene FOB USG cts/lb",
+    "unit": "LB",
+    "currency": "USC",
+    "group": "Styrene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAOTM00",
+    "label": "Ethylene CFR NE Asia",
+    "name": "Ethylene CFR NE Asia",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Olefins",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "PHASM05",
+    "label": "Benzene FOB Korea",
+    "name": "Benzene FOB Korea Marker",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Aromatics",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "AAOAX00",
+    "label": "Benzene CIF ARA",
+    "name": "Benzene CIF ARA",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Aromatics",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAKYD00",
+    "label": "Benzene FOB USG",
+    "name": "Benzene FOB USG Mo02 cts/gal",
+    "unit": "GAL",
+    "currency": "USC",
+    "group": "Aromatics",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAWWK00",
+    "label": "Propylene CFR China",
+    "name": "Propylene Poly Grade CFR China",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Olefins",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "PHASO05",
+    "label": "Toluene FOB Korea",
+    "name": "Toluene FOB Korea Marker",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Aromatics",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "PHAOO00",
+    "label": "ACN CFR FE Asia",
+    "name": "ACN CFR FE Asia Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Acrylonitrile",
+    "freq": "W",
+    "target": true
+  },
+  {
+    "code": "AAWWM00",
+    "label": "Butadiene FOB Korea",
+    "name": "Butadiene FOB Korea",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Butadiene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAWWL00",
+    "label": "Butadiene CFR China",
+    "name": "Butadiene CFR China",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Butadiene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "BTNEA00",
+    "label": "Butadiene CFR NE Asia",
+    "name": "Butadiene CFR North East Asia",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Butadiene",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "AAWWU00",
+    "label": "Butadiene China Domestic",
+    "name": "Butadiene China Domestic (Ex-Tank) Yuan/mt",
+    "unit": "MT",
+    "currency": "CNY",
+    "group": "Butadiene",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAVCC00",
+    "label": "Freight USG-Korea 10-12kt",
+    "name": "Liquid Chemicals Freight USG-Korea 10-12 kt (daily)",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Freight",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "AAVCA00",
+    "label": "Freight Korea-East China 5kt",
+    "name": "Liquid Chemicals Freight Korea-East China 5 kt (daily)",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Freight",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "PCACG00",
+    "label": "WTI Cushing Mo01",
+    "name": "WTI Cushing Mo01",
+    "unit": "BBL",
+    "currency": "USD",
+    "group": "Energy",
+    "freq": "D",
+    "target": false
+  },
+  {
+    "code": "PHBIF00",
+    "label": "PP Inj CFR FE Asia",
+    "name": "PP Inj CFR FE Asia",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Resins",
+    "freq": "D",
+    "target": true
+  },
+  {
+    "code": "PHAIL00",
+    "label": "PS GP CFR China",
+    "name": "PS G-P CFR China Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Resins",
+    "freq": "W",
+    "target": true
+  },
+  {
+    "code": "PHAIR00",
+    "label": "HIPS CFR China",
+    "name": "HIPS CFR China Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Resins",
+    "freq": "W",
+    "target": true
+  },
+  {
+    "code": "PHAHF00",
+    "label": "ABS Inj CFR China",
+    "name": "ABS Inj CFR China Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Resins",
+    "freq": "W",
+    "target": true
+  }
+]

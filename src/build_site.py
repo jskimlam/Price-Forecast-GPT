@@ -101,10 +101,12 @@ def main():
 
     tpl=(ROOT/"templates/technical_dashboard.html").read_text(encoding="utf-8")
     chart_js=(ROOT/"node_modules/chart.js/dist/chart.umd.js").read_text(encoding="utf-8").replace("</script","<\\/script")
+    html2canvas_js=(ROOT/"node_modules/html2canvas/dist/html2canvas.min.js").read_text(encoding="utf-8").replace("</script","<\\/script")
     dashboard_js=(ROOT/"templates/technical_dashboard.js").read_text(encoding="utf-8").replace("</script","<\\/script")
     html=(tpl
         .replace("__FORECAST_PAYLOAD__",json.dumps(payload,ensure_ascii=False))
         .replace("__CHART_JS__",chart_js)
+        .replace("__HTML2CANVAS_JS__",html2canvas_js)
         .replace("__DASHBOARD_JS__",dashboard_js)
     )
     (site/"index.html").write_text(html,encoding="utf-8")

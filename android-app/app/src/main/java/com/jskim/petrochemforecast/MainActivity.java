@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -24,6 +25,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+
+import androidx.core.content.FileProvider;
 
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://jskimlam.github.io/Price-Forecast-GPT/";
@@ -116,17 +119,27 @@ public class MainActivity extends Activity {
             new Thread(() -> {
                 try {
                     byte[] bytes = decodeDataUrl(dataUrl);
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
-                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-                    values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PetrochemForecast");
-                    Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                    if (uri == null) throw new IllegalStateException("MediaStore insert failed");
-                    try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-                        if (out == null) throw new IllegalStateException("Output stream failed");
-                        out.write(bytes);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        ContentValues values = new ContentValues();
+                        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+                        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PetrochemForecast");
+                        Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        if (uri == null) throw new IllegalStateException("MediaStore insert failed");
+                        try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                            if (out == null) throw new IllegalStateException("Output stream failed");
+                            out.write(bytes);
+                        }
+                        toast("PNG 저장 완료 · Pictures/PetrochemForecast");
+                    } else {
+                        File dir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PetrochemForecast");
+                        if (!dir.exists()) dir.mkdirs();
+                        File file = new File(dir, filename);
+                        try (FileOutputStream out = new FileOutputStream(file)) {
+                            out.write(bytes);
+                        }
+                        toast("PNG 저장 완료");
                     }
-                    toast("PNG 저장 완료 · Pictures/PetrochemForecast");
                 } catch (Exception e) {
                     toast("PNG 저장 실패");
                 }
@@ -144,7 +157,7 @@ public class MainActivity extends Activity {
                     try (FileOutputStream out = new FileOutputStream(file)) {
                         out.write(bytes);
                     }
-                    Uri uri = Uri.parse("content://" + getPackageName() + ".fileprovider/shared/" + filename);
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", file);
                     runOnUiThread(() -> {
                         Intent intent = new Intent(Intent.ACTION_SEND);
                         intent.setType("image/png");

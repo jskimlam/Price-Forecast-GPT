@@ -132,8 +132,22 @@ def _build_outlook(item, frame, s):
     if not negatives: negatives=["뚜렷한 추가 하락 요인은 제한적"]
 
     dominant=max([("상승",float(ref.get("up",0))),("보합",float(ref.get("flat",0))),("하락",float(ref.get("down",0)))],key=lambda z:z[1])
+    tech=(item.get("technicalState") or {}).get("label","NEUTRAL")
+    bias=item.get("bias","NEUTRAL")
+    if tech=="BEARISH" and base_target>last and bias=="NEUTRAL":
+        interpretation="기술 약세 · 평균회귀 반등 시도"
+        item["procurementSignal"]="반등 확인 후 분할 대응"
+    elif tech=="BULLISH" and base_target<last and bias=="NEUTRAL":
+        interpretation="상승 추세 · 단기 조정 가능"
+    elif tech=="BULLISH" and base_target>=last:
+        interpretation="상승 추세 지속"
+    elif tech=="BEARISH" and base_target<=last:
+        interpretation="하락 추세 지속"
+    else:
+        interpretation="혼조 · 방향 확인 필요"
+    item["forecastInterpretation"]=interpretation
     summary=(
-        f"{ref.get('label')} 기준 예상 중심가격 {_fmt_price(base_target)}. "
+        f"{interpretation}. {ref.get('label')} 기준 예상 중심가격 {_fmt_price(base_target)}. "
         f"{dominant[0]} 확률 {dominant[1]*100:.0f}%가 가장 높습니다. "
         f"상단은 {_fmt_price(resistance1)} 돌파 여부, 하단은 {_fmt_price(support1)} 지지 여부가 핵심입니다."
     )

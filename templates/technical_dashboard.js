@@ -134,7 +134,7 @@ function drawMacd(hist){
     ds("MACD",macd,"#35c2ff",{borderWidth:1.5,order:1}),ds("Signal",sig,"#f5c35a",{borderWidth:1.3,order:2})
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},
     scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(42,76,103,.18)"},ticks:{font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
-  }});
+  }}});
   const h=hist.length?hist[hist.length-1].macdHist:null;
   el("macdState").textContent=h==null?"":h>0?"상승 압력 +"+h.toFixed(2):"하락 압력 "+h.toFixed(2);
   el("macdState").className=h>0?"up":h<0?"dn":"flat";

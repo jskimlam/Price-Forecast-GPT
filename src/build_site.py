@@ -1,4 +1,5 @@
-import json, os, shutil, time, urllib.parse, urllib.request, urllib.error
+import json, os, shutil, time
+import requests
 import pandas as pd
 from .forecast_engine import ROOT, build_payload, load_variables
 from .backtest import run_backtest
@@ -10,26 +11,47 @@ API_KEY = os.getenv("APPS_SCRIPT_API_KEY", "").strip()
 def get_json(api, **params):
     if not API_KEY:
         raise RuntimeError("APPS_SCRIPT_API_KEY secret is missing")
-    q={"api":api,"key":API_KEY}; q.update(params)
-    url=APPS_SCRIPT_URL+("&" if "?" in APPS_SCRIPT_URL else "?")+urllib.parse.urlencode(q)
-    req=urllib.request.Request(url,headers={"User-Agent":"Price-Forecast-GPT/1.1"})
-    with urllib.request.urlopen(req,timeout=60) as response:
-        obj=json.loads(response.read().decode("utf-8"))
-    if obj.get("ok") is False:
-        raise RuntimeError(obj.get("error") or f"Apps Script {api} failed")
-    return obj
+    q={"api":api,"key":API_KEY,"_ts":str(int(time.time()*1000))}
+    q.update(params)
+    last=None
+    for attempt in range(1,6):
+        try:
+            r=requests.get(
+                APPS_SCRIPT_URL,
+                params=q,
+                headers={
+                    "User-Agent":"Mozilla/5.0 Price-Forecast-GPT/1.2",
+                    "Cache-Control":"no-cache",
+                    "Pragma":"no-cache"
+                },
+                timeout=90,
+                allow_redirects=True
+            )
+            r.raise_for_status()
+            obj=r.json()
+            if obj.get("ok") is False:
+                raise RuntimeError(obj.get("error") or f"Apps Script {api} failed")
+            return obj
+        except Exception as exc:
+            last=exc
+            if attempt>=5:
+                raise
+            time.sleep(attempt*3)
+    raise last
 
 def post_json(action, rows):
     if not API_KEY:
         return None
-    body=json.dumps({"api_key":API_KEY,"action":action,"rows":rows},ensure_ascii=False).encode("utf-8")
-    req=urllib.request.Request(
-        APPS_SCRIPT_URL,data=body,
-        headers={"Content-Type":"application/json","User-Agent":"Price-Forecast-GPT/1.1"},
-        method="POST"
+    body={"api_key":API_KEY,"action":action,"rows":rows}
+    r=requests.post(
+        APPS_SCRIPT_URL,
+        json=body,
+        headers={"User-Agent":"Mozilla/5.0 Price-Forecast-GPT/1.2"},
+        timeout=90,
+        allow_redirects=True
     )
-    with urllib.request.urlopen(req,timeout=60) as response:
-        return json.loads(response.read().decode("utf-8"))
+    r.raise_for_status()
+    return r.json()
 
 def load_live():
     obj=get_json("prices",limit=0)

@@ -528,25 +528,55 @@ function renderSide(x){
   const bt=x.backtest||{};
   const btHorizon=x.freq==="W"?"2W":"5D",btBand=x.freq==="W"?"±1.0%":"±0.5%";
   if(bt.sampleCount){
+    const samples=Number(bt.sampleCount)||0,acc=Number(bt.directionAccuracy)||0,skill=Number(bt.skill)||0,mae=Number(bt.maePct)||0;
     el("backtest").innerHTML=
       '<div class="bt"><small>Direction Accuracy</small><b>'+bt.directionAccuracy+'%</b><span class="btMetricNote">과거 상승·보합·하락 방향 적중률</span></div>'+
-      '<div class="bt"><small>Model Skill</small><b>'+bt.skill+'</b><span class="btMetricNote">정확도·가격오차·확률보정을 합친 내부 0–100 점수</span></div>'+
-      '<div class="bt"><small>MAE</small><b>'+bt.maePct+'%</b><span class="btMetricNote">예상 중심가와 실제가의 평균 절대오차</span></div>'+
-      '<div class="bt"><small>Samples</small><b>'+bt.sampleCount+'</b><span class="btMetricNote">워크포워드 검증에 사용한 과거 사례 수</span></div>';
-    el("backtestExplain").innerHTML='<b>Direction Accuracy는 미래 적중확률이 아닙니다.</b> 과거 각 시점에서 실제로 예측을 다시 계산한 뒤, '+btHorizon+' 후 가격방향을 비교한 적중 비율입니다. 실제 변동이 '+btBand+' 안이면 보합으로 판정합니다. Model Skill 역시 확률이 아니라 내부 성능지수입니다.';
-    if(Number(bt.sampleCount)<8){
+      '<div class="bt"><small>Model Skill</small><b>'+bt.skill+'</b><span class="btMetricNote">정확도·가격오차·확률오차(Brier)를 합친 내부 0–100 성능점수</span></div>'+
+      '<div class="bt"><small>MAE</small><b>'+bt.maePct+'%</b><span class="btMetricNote">예상 중심가와 실제가의 평균 절대오차율</span></div>'+
+      '<div class="bt"><small>Samples</small><b>'+bt.sampleCount+'</b><span class="btMetricNote">과거 워크포워드 검증 사례 수</span></div>';
+
+    let verdict="참고 수준",kind="watch",message="";
+    if(samples<8){
+      verdict="검증 부족";
+      kind="weak";
+      message="표본이 "+samples+"개뿐이라 현재 적중률과 Skill의 통계적 안정성이 낮습니다. 이 보드는 현재 Forecast를 확정하거나 무효화하기보다, 모델 성능을 아직 보수적으로 봐야 한다는 신호로 사용합니다.";
+    }else if(acc<40 || skill<35){
+      verdict="과거 성능 취약";
+      kind="weak";
+      message="최근 워크포워드 검증에서 방향 적중률 또는 종합 Skill이 낮았습니다. 현재 전망은 참고하되 확률과 가격목표를 강한 확신으로 해석하지 않는 것이 적절합니다.";
+    }else if(samples>=15 && acc>=55 && skill>=50 && mae<=8){
+      verdict="과거 성능 양호";
+      kind="good";
+      message="충분한 표본에서 방향 적중률·가격오차·확률예측이 비교적 안정적으로 나타났습니다. 그래도 이는 과거 재현 성적이며 미래 적중을 보장하지 않습니다.";
+    }else{
+      verdict="참고 수준";
+      kind="watch";
+      message="과거 검증 결과가 극단적으로 나쁘지는 않지만 표본 수와 오차를 함께 봐야 합니다. 현재 Forecast의 보조 신뢰도 지표로 활용하는 수준이 적절합니다.";
+    }
+    el("backtestVerdict").innerHTML='<div class="btVerdictTop"><b>현재 검증상태</b><span class="'+kind+'">'+verdict+'</span></div><p>'+message+'</p>';
+
+    el("backtestExplain").innerHTML=
+      '<b>읽는 방법</b><br>'+
+      '① Direction Accuracy: 과거 각 시점에서 '+btHorizon+' 후 실제 방향을 얼마나 맞혔는지 본 비율입니다. '+btBand+' 안은 보합으로 판정합니다.<br>'+
+      '② Model Skill: Direction Accuracy, MAE, Brier Score(확률예측 오차)를 하나로 합친 내부 0–100 성능지수입니다.<br>'+
+      '③ MAE: 예상 중심가격과 실제가격 사이의 평균 절대오차율입니다. 낮을수록 좋습니다.<br>'+
+      '④ Samples: 위 성적을 계산한 과거 검증 건수입니다. 많을수록 수치가 안정적입니다.<br><br>'+
+      '<b>중요:</b> 이 보드는 현재 상승·하락 방향을 정하는 보드가 아니라 <b>모델이 과거에도 같은 방식으로 얼마나 재현성 있게 작동했는지 확인하는 품질검사 보드</b>입니다. Direction Accuracy '+bt.directionAccuracy+'%는 다음 전망이 맞을 확률 '+bt.directionAccuracy+'%라는 뜻이 아닙니다.';
+
+    if(samples<8){
       el("backtestWarning").style.display="block";
-      el("backtestWarning").textContent="주의: 표본이 "+bt.sampleCount+"개로 매우 적어 Direction Accuracy와 Model Skill의 변동성이 큽니다. 현재 수치를 강한 신뢰도로 해석하지 마십시오.";
-    }else if(Number(bt.sampleCount)<15){
+      el("backtestWarning").textContent="주의: 표본이 "+samples+"개로 매우 적습니다. 현재 Direction Accuracy와 Model Skill은 몇 번의 결과만 바뀌어도 크게 움직일 수 있습니다.";
+    }else if(samples<15){
       el("backtestWarning").style.display="block";
-      el("backtestWarning").textContent="표본이 "+bt.sampleCount+"개로 아직 제한적입니다. 방향 적중률은 참고 수준으로 해석하는 것이 적절합니다.";
+      el("backtestWarning").textContent="표본이 "+samples+"개로 아직 제한적입니다. 현재 성적은 참고 수준으로 해석하는 것이 적절합니다.";
     }else{
       el("backtestWarning").style.display="none";
       el("backtestWarning").textContent="";
     }
   }else{
     el("backtest").innerHTML='<div class="desc">Backtest pending</div>';
-    el("backtestExplain").textContent="충분한 과거 표본이 쌓이면 워크포워드 방식으로 방향 적중률과 가격오차를 계산합니다.";
+    el("backtestVerdict").innerHTML='<div class="btVerdictTop"><b>현재 검증상태</b><span class="watch">검증 대기</span></div><p>충분한 과거 표본이 쌓이지 않아 아직 성능을 평가할 수 없습니다.</p>';
+    el("backtestExplain").innerHTML='<b>이 보드의 역할:</b> 과거 시점으로 되돌아가 당시 정보만으로 모델을 반복 실행하고, 이후 실제 가격과 비교해 방향 적중률·가격오차·확률예측 품질을 점검합니다.';
     el("backtestWarning").style.display="none";
   }
   const st=x.staleness||{};

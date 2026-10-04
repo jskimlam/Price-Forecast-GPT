@@ -22,11 +22,29 @@ function rangeBars(freq,r){
   return (d[freq]||d.D)[r]||66;
 }
 function priceUnit(x){return ((x.currency||"")+"/"+(x.unit||"")).replace(/\/$/,"")}
+const PRODUCT_VIEW={
+  NMCL001:{short:"WTI",market:"NYMEX"},
+  PAAAD00:{short:"Naphtha",market:"CFR Japan"},
+  AAMFI00:{short:"SM",market:"CFR China"},
+  AAOTM00:{short:"Ethylene",market:"CFR NE Asia"},
+  PHASM05:{short:"BZ",market:"FOB Korea"},
+  AAWWK00:{short:"Propylene",market:"CFR China"},
+  PHAOO00:{short:"ACN",market:"CFR FE Asia"},
+  BTNEA00:{short:"BD",market:"CFR NE Asia"},
+  PHBIF00:{short:"PP",market:"Inj · CFR FE Asia"},
+  PHAIL00:{short:"PS",market:"GP · CFR China"},
+  PHAIR00:{short:"HIPS",market:"CFR China"},
+  PHAHF00:{short:"ABS",market:"Inj · CFR China"}
+};
+function productView(x){
+  return PRODUCT_VIEW[x.code]||{short:(x.label||x.code).split(" ")[0],market:(x.label||"").replace((x.label||"").split(" ")[0],"").trim()};
+}
 
 function marketCard(x){
-  const t=(x.technicalState||{}).label||"NEUTRAL";
+  const t=(x.technicalState||{}).label||"NEUTRAL",pv=productView(x);
   return '<div class="mcard '+(x.code===current?'active':'')+'" data-code="'+x.code+'">'+
-    '<div class="mname">'+x.label+'</div>'+
+    '<div class="mname">'+pv.short+'</div>'+
+    '<div class="mregion">'+pv.market+'</div>'+
     '<div class="mcode">'+x.code+'</div>'+
     '<div class="mprice">'+fmt(x.last)+'</div>'+
     '<div class="mstatus"><span class="'+cls(x.bias)+'">예측 '+x.bias+'</span><span class="'+cls(t)+'">기술 '+t+'</span></div></div>';
@@ -168,7 +186,37 @@ const crossSignalLabels={
     ctx.restore();
   }
 };
-if(HAS_CHART) Chart.register(splitPlugin,probabilityLabels,forecastPriceLabels,indicatorZones,crossSignalLabels);
+const forecastTable={
+  id:"forecastTable",
+  afterDraw:function(chart,args,opts){
+    if(!opts||!opts.enabled||!Array.isArray(opts.rows)||!opts.rows.length)return;
+    const ctx=chart.ctx,a=chart.chartArea;
+    if(!a)return;
+    const compact=(a.right-a.left)<620;
+    const rowH=compact?19:22,headH=compact?25:29;
+    const w=compact?176:218,h=headH+rowH*opts.rows.length+8;
+    const x=a.right-w-8,y=a.top+8;
+    ctx.save();
+    ctx.shadowColor="rgba(15,23,42,.12)";ctx.shadowBlur=10;
+    ctx.fillStyle="rgba(255,255,255,.94)";ctx.strokeStyle="#cbd5e1";ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle="#0f2740";ctx.font=(compact?"900 10px system-ui":"900 12px system-ui");
+    ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText("예측 가격",x+10,y+headH/2);
+    ctx.strokeStyle="#e2e8f0";ctx.beginPath();ctx.moveTo(x+8,y+headH);ctx.lineTo(x+w-8,y+headH);ctx.stroke();
+    const c1=x+10,c2=x+(compact?65:82),c3=x+w-10;
+    opts.rows.forEach(function(r,i){
+      const yy=y+headH+rowH*i+rowH/2+2;
+      ctx.font=(compact?"800 9px system-ui":"800 10px system-ui");
+      ctx.textAlign="left";ctx.fillStyle="#64748b";ctx.fillText(r.label||"",c1,yy);
+      ctx.fillStyle="#475569";ctx.fillText(r.date?shortDate(r.date):"",c2,yy);
+      ctx.textAlign="right";ctx.fillStyle="#b91c1c";ctx.font=(compact?"950 10px system-ui":"950 11px system-ui");ctx.fillText(fmt(r.center),c3,yy);
+      if(i<opts.rows.length-1){ctx.strokeStyle="rgba(226,232,240,.75)";ctx.beginPath();ctx.moveTo(x+8,yy+rowH/2);ctx.lineTo(x+w-8,yy+rowH/2);ctx.stroke();}
+    });
+    ctx.restore();
+  }
+};
+if(HAS_CHART) Chart.register(splitPlugin,probabilityLabels,indicatorZones,crossSignalLabels,forecastTable);
 
 function addBusinessDays(dateText,n){
   const d=new Date(String(dateText)+"T00:00:00");
@@ -220,7 +268,7 @@ function chartData(x){
 function drawPrice(x){
   const d=chartData(x);
   if(priceChart)priceChart.destroy();
-  const sets=[ds("실가격",d.actual,"#0b0f19",{borderWidth:4.8,pointHoverRadius:6,order:3})];
+  const sets=[ds("실가격",d.actual,"#0b0f19",{borderWidth:5.8,pointHoverRadius:7,order:3})];
   if(state.boll){
     sets.push(ds("볼린저 상단",d.bbU,"#64748b",{borderWidth:1.8,order:8}));
     sets.push(ds("볼린저 하단",d.bbL,"#64748b",{borderWidth:1.8,fill:"-1",backgroundColor:"rgba(100,116,139,.16)",order:9}));
@@ -232,7 +280,7 @@ function drawPrice(x){
   if(state.forecast&&d.future.length){
     sets.push(ds("예측범위 상단 80%",d.fh,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],order:10}));
     sets.push(ds("예측범위 하단 80%",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
-    sets.push(ds("예측",d.fc,"#e53935",{borderWidth:3.8,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4.5:0},pointHoverRadius:6,order:1}));
+    sets.push(ds("예측",d.fc,"#e53935",{borderWidth:4.2,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4.5:0},pointHoverRadius:6,order:1}));
   }
   if(x.scenarios){
     const r=x.scenarios.bull&&Number(x.scenarios.bull.trigger),sp=x.scenarios.bear&&Number(x.scenarios.bear.trigger);
@@ -246,7 +294,7 @@ function drawPrice(x){
       legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:11,weight:"700"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
-      forecastSplit:{index:Math.max(0,d.n-1)},forecastPriceLabels:{enabled:state.forecast,startIndex:d.n}
+      forecastSplit:{index:Math.max(0,d.n-1)},forecastTable:{enabled:state.forecast,rows:x.horizons||[]}
     },
     scales:{
       x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:11,weight:"600"},maxRotation:0}},
@@ -427,8 +475,7 @@ function renderSide(x){
 function render(){
   const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;
   renderMarket();el("asof").textContent=DB.asOf||"";el("model").textContent=DB.generatedBy||"";
-  el("code").textContent=x.code;el("title").textContent=x.label;
-  el("meta").textContent=priceUnit(x)+" · "+(x.freq==="W"?"주간 평가":"데일리 평가")+" · 최근 평가 "+x.lastDate;
+  const pv=productView(x);el("title").textContent=pv.short;el("code").textContent=pv.market+" · "+x.code;\n  el("meta").textContent=priceUnit(x)+" · "+(x.freq==="W"?"주간 평가":"데일리 평가")+" · 최근 평가 "+x.lastDate;
   el("last").textContent=fmt(x.last);
   const tech=(x.technicalState||{}).label||"NEUTRAL";
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);

@@ -507,6 +507,17 @@ function renderSide(x){
   el("fresh").textContent="Data freshness · "+(st.daysSinceAssessment==null?0:st.daysSinceAssessment)+"d since assessment · unchanged "+(st.unchangedPct20!==undefined?(st.unchangedPct20*100).toFixed(0):0)+"% of recent observations";
 
   const ex=x.outlookExplanation||{},sc=x.scenarios||{};
+  el("explainHeadline").textContent=x.forecastInterpretation||ex.summary||"현재 데이터 기준 전망을 계산 중입니다.";
+  el("explainTechnical").textContent=ex.technicalView||(((x.technicalState||{}).label||"NEUTRAL")+" · 기술상태");
+  el("explainTechnical").className=cls((x.technicalState||{}).label||"NEUTRAL");
+  el("explainModel").textContent=ex.modelView||((x.bias||"NEUTRAL")+" · 모델 전망");
+  el("explainModel").className=cls(x.bias||"NEUTRAL");
+  el("conflictBox").textContent=ex.conflictExplanation||"기술신호와 모델 전망의 관계를 계산 중입니다.";
+  el("conflictBox").className="conflictBox"+(ex.hasConflict?" alert":"");
+  el("upConfirmation").textContent=ex.upConfirmation||"상승 확인 조건을 계산 중입니다.";
+  el("downConfirmation").textContent=ex.downConfirmation||"하락 지속 조건을 계산 중입니다.";
+  el("driverSummary").textContent=ex.driverSummary||"유의미한 선행 Driver 신호 제한적";
+  el("reliabilityText").textContent=ex.reliability||("모델 신뢰도 "+(x.confidence||0)+"%");
   el("outlookSummary").textContent=ex.summary||"현재 데이터 기준 전망 근거를 계산 중입니다.";
   const base=sc.base||{},bull=sc.bull||{},bear=sc.bear||{};
   el("scenarioGrid").innerHTML=

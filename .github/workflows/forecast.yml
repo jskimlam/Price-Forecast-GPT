@@ -39,6 +39,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: npm install chart.js@4.4.6 --no-save
       - name: Build forecast dashboard
         env:
           APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbxT7FlpEtmYYHReyeFI4KTJtoQGEG70mgJ-ihnbda3PaMsktsI9s0TQfrfXuWekputWwA/exec

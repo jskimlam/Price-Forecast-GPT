@@ -1,0 +1,43 @@
+name: build-site
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "10 23 * * 0-4"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "templates/**"
+      - "data/**"
+      - ".github/workflows/build-site.yml"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Build dashboard
+        env:
+          PF_GAS_URL: ${{ secrets.PF_GAS_URL }}
+          PF_READ_TOKEN: ${{ secrets.PF_READ_TOKEN }}
+        run: python -m src.build_site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -3,6 +3,7 @@ const DB=window.DB||{items:[]};
 const good=(DB.items||[]).filter(function(x){return !x.error});
 let current=(good.find(function(x){return x.code==="AAMFI00"})||good[0]||{}).code;
 let priceChart,rsiChart,macdChart,probChart,captureChart;
+let captureAssetBlob=null,captureAssetPromise=null;
 const state={range:"3M",ma5:true,ma20:true,ma60:true,ma120:true,boll:true,forecast:true};
 
 const HAS_CHART = typeof window.Chart !== "undefined";
@@ -616,10 +617,27 @@ function populateCapture(x){
   drawCaptureChart(x,pair);
   requestAnimationFrame(function(){fitCapturePreview();});
 }
+function setCaptureReady(ready){
+  const save=el("captureSaveBtn"),share=el("captureShareBtn");
+  save.disabled=!ready;share.disabled=!ready;
+  save.textContent=ready?"PNG 저장":"PNG 준비 중…";
+  share.textContent=ready?"공유":"공유 준비 중…";
+}
+async function prepareCaptureAsset(){
+  if(captureAssetPromise)return captureAssetPromise;
+  captureAssetPromise=(async function(){
+    const canvas=await makeCaptureCanvas();
+    const blob=await new Promise(function(resolve){canvas.toBlob(resolve,"image/png");});
+    if(!blob)throw new Error("PNG 생성에 실패했습니다.");
+    captureAssetBlob=blob;setCaptureReady(true);return blob;
+  })();
+  try{return await captureAssetPromise;}catch(err){captureAssetPromise=null;setCaptureReady(false);throw err;}
+}
 function openCaptureMode(){
   const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;
+  captureAssetBlob=null;captureAssetPromise=null;setCaptureReady(false);
   populateCapture(x);el("captureModal").classList.add("open");el("captureModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
-  setTimeout(fitCapturePreview,50);
+  setTimeout(function(){fitCapturePreview();prepareCaptureAsset().catch(captureError);},180);
 }
 function closeCaptureMode(){
   el("captureModal").classList.remove("open");el("captureModal").setAttribute("aria-hidden","true");document.body.style.overflow="";
@@ -635,22 +653,23 @@ function captureFilename(){
   const x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
   return (pv.short+"_"+pv.market+"_"+x.lastDate).replace(/[^A-Za-z0-9가-힣_-]+/g,"_")+".png";
 }
-async function saveCapturePng(){
-  const canvas=await makeCaptureCanvas(),a=document.createElement("a");a.download=captureFilename();a.href=canvas.toDataURL("image/png");a.click();
+function saveBlobAsFile(blob){
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.download=captureFilename();a.href=url;a.click();
+  setTimeout(function(){URL.revokeObjectURL(url)},1200);
 }
-async function shareCapturePng(){
-  const canvas=await makeCaptureCanvas(),blob=await new Promise(function(resolve){canvas.toBlob(resolve,"image/png");});
-  if(!blob)throw new Error("PNG 생성에 실패했습니다.");
+async function saveCapturePng(){
+  const blob=captureAssetBlob||await prepareCaptureAsset();saveBlobAsFile(blob);
+}
+function shareCapturePng(){
+  const blob=captureAssetBlob;if(!blob){captureError(new Error("공유 이미지를 준비 중입니다. 잠시 후 다시 눌러주세요."));return;}
   const file=new File([blob],captureFilename(),{type:"image/png"}),x=good.find(function(z){return z.code===current})||good[0],pv=productView(x);
   if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-    await navigator.share({title:pv.short+" "+pv.market+" 전망",text:"PETROCHEM FORECAST ENGINE 공유카드",files:[file]});return;
+    navigator.share({title:pv.short+" "+pv.market+" 전망",text:"PETROCHEM FORECAST ENGINE 공유카드",files:[file]}).catch(function(err){if(err&&err.name!=="AbortError")captureError(err);});return;
   }
   if(navigator.clipboard&&window.ClipboardItem){
-    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-    alert("공유 기능을 지원하지 않는 환경이라 PNG를 클립보드에 복사했습니다.");return;
+    navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).then(function(){alert("PNG를 클립보드에 복사했습니다.");}).catch(function(){saveBlobAsFile(blob);alert("공유 기능을 지원하지 않아 PNG로 저장했습니다.");});return;
   }
-  const a=document.createElement("a");a.download=captureFilename();a.href=URL.createObjectURL(blob);a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
-  alert("이 브라우저는 파일 공유를 지원하지 않아 PNG로 저장했습니다.");
+  saveBlobAsFile(blob);alert("이 브라우저는 파일 공유를 지원하지 않아 PNG로 저장했습니다.");
 }
 function captureError(err){alert("캡쳐 처리 중 오류: "+(err&&err.message?err.message:String(err)));}
 
@@ -663,7 +682,7 @@ document.querySelectorAll(".ctl.overlay").forEach(function(b){b.onclick=function
 el("captureModeBtn").onclick=openCaptureMode;
 el("captureCloseBtn").onclick=closeCaptureMode;
 el("captureSaveBtn").onclick=function(){saveCapturePng().catch(captureError);};
-el("captureShareBtn").onclick=function(){shareCapturePng().catch(captureError);};
+el("captureShareBtn").onclick=shareCapturePng;
 el("captureModal").addEventListener("click",function(e){if(e.target===el("captureModal"))closeCaptureMode();});
 window.addEventListener("resize",function(){if(el("captureModal").classList.contains("open"))fitCapturePreview();});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&el("captureModal").classList.contains("open"))closeCaptureMode();});

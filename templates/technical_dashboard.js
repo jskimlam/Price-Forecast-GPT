@@ -295,10 +295,10 @@ function drawPrice(x){
     sets.push(ds("볼린저 상단",d.bbU,"#64748b",{borderWidth:1.8,order:8}));
     sets.push(ds("볼린저 하단",d.bbL,"#64748b",{borderWidth:1.8,fill:"-1",backgroundColor:"rgba(100,116,139,.16)",order:9}));
   }
-  if(state.ma5)sets.push(ds("MA5",d.ma5,"#00a676",{borderWidth:2.6,order:5}));
-  if(state.ma20)sets.push(ds("MA20",d.ma20,"#f59e0b",{borderWidth:2.6,order:5}));
+  if(state.ma5)sets.push(ds("MA5",d.ma5,"#2563eb",{borderWidth:2.6,order:5}));
+  if(state.ma20)sets.push(ds("MA20",d.ma20,"#e53935",{borderWidth:5.8,order:4}));
   if(state.ma60)sets.push(ds("MA60",d.ma60,"#7c3aed",{borderWidth:2.6,order:5}));
-  if(state.ma120)sets.push(ds("MA120",d.ma120,"#2563eb",{borderWidth:2.6,order:5}));
+  if(state.ma120)sets.push(ds("MA120",d.ma120,"#00a676",{borderWidth:2.6,order:5}));
   if(state.forecast&&d.future.length){
     sets.push(ds("예측범위 상단 80%",d.fh,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],order:10}));
     sets.push(ds("예측범위 하단 80%",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
@@ -687,7 +687,7 @@ function drawCaptureChart(x,pair){
   const ext=function(a){return a.concat(Array(future.length).fill(null));};
   captureChart=new Chart(el("captureChart"),{type:"line",data:{labels:labels,datasets:[
     {label:"종가",data:ext(actual),borderColor:"#5860ff",backgroundColor:"#5860ff",borderWidth:4,pointRadius:0,tension:.12,spanGaps:true},
-    {label:"20일선",data:ext(ma20),borderColor:"#2877d6",backgroundColor:"#2877d6",borderWidth:1.8,pointRadius:0,tension:.12,spanGaps:true},
+    {label:"20일선",data:ext(ma20),borderColor:"#e53935",backgroundColor:"#e53935",borderWidth:4,pointRadius:0,tension:.12,spanGaps:true},
     {label:"예측 상단",data:hi,borderColor:"rgba(232,73,73,.35)",borderWidth:1,borderDash:[4,3],pointRadius:0,spanGaps:true},
     {label:"예측 하단",data:lo,borderColor:"rgba(47,123,212,.35)",borderWidth:1,borderDash:[4,3],pointRadius:0,fill:"-1",backgroundColor:"rgba(130,150,180,.12)",spanGaps:true},
     {label:"예측",data:fc,borderColor:"#e84949",backgroundColor:"#e84949",borderWidth:3,pointRadius:5,spanGaps:true}

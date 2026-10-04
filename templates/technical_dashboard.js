@@ -399,21 +399,51 @@ function flag(label,value,type){
   return '<div class="indicator"><span class="name">'+label+'</span><span class="value">'+value+'</span><span class="pill '+type+'">'+txt+'</span></div>';
 }
 function compare(a,b){return a==null||b==null?"neutral":a>b?"bull":a<b?"bear":"neutral"}
+function scoreClass(v){return v>1?"pos":v<-1?"neg":"zero"}
+function scoreLeft(v){return Math.max(0,Math.min(100,(Number(v)+100)/2))}
+function scoreLabel(v,kind){
+  const n=Number(v)||0;
+  if(kind==="technical")return n>=28?"BULLISH":n<=-28?"BEARISH":"NEUTRAL";
+  return n>14?"BULLISH":n<-14?"BEARISH":"NEUTRAL";
+}
 function renderSignals(x){
-  const hist=x.history||[],h=hist.length?hist[hist.length-1]:{},rsi=h.rsi,bb=h.bbPos,mh=h.macdHist;
-  const arr=[
-    flag("가격 vs MA5",fmt(h.price)+" / "+fmt(h.ma5),compare(h.price,h.ma5)),
-    flag("MA5 vs MA20",fmt(h.ma5)+" / "+fmt(h.ma20),compare(h.ma5,h.ma20)),
-    flag("MA20 vs MA60",fmt(h.ma20)+" / "+fmt(h.ma60),compare(h.ma20,h.ma60)),
-    flag("MA60 vs MA120",fmt(h.ma60)+" / "+fmt(h.ma120),compare(h.ma60,h.ma120)),
-    flag("RSI(14)",rsi==null?"—":rsi.toFixed(1),rsi==null?"neutral":rsi>=50&&rsi<70?"bull":rsi<50&&rsi>30?"bear":"neutral"),
-    flag("MACD Hist",mh==null?"—":mh.toFixed(2),mh==null?"neutral":mh>0?"bull":mh<0?"bear":"neutral"),
-    flag("Bollinger 위치",bb==null?"—":(bb*100).toFixed(0)+"%",bb==null?"neutral":bb>.58?"bull":bb<.42?"bear":"neutral")
-  ];
-  el("indicatorList").innerHTML=arr.join("");
   const ts=x.technicalState||{label:"NEUTRAL",score:0};
-  el("techComposite").textContent=ts.label;el("techComposite").className=cls(ts.label);
-  el("techScore").textContent=(ts.score>=0?"+":"")+Number(ts.score||0).toFixed(2);
+  const tech=Math.max(-100,Math.min(100,Number(ts.score||0)*100));
+  const forecast=Math.max(-100,Math.min(100,Number(x.score||0)*100));
+  const ex=x.outlookExplanation||{};
+
+  el("scoreTechnical").textContent=(tech>=0?"+":"")+tech.toFixed(1);
+  el("scoreTechnical").className=cls(ts.label||scoreLabel(tech,"technical"));
+  el("scoreTechnicalLabel").textContent=(ts.label||scoreLabel(tech,"technical"))+" / 100";
+  el("scoreTechnicalLabel").className=cls(ts.label||scoreLabel(tech,"technical"));
+  el("scoreTechnicalNeedle").style.left=scoreLeft(tech)+"%";
+
+  el("scoreForecast").textContent=(forecast>=0?"+":"")+forecast.toFixed(1);
+  el("scoreForecast").className=cls(x.bias||scoreLabel(forecast,"forecast"));
+  el("scoreForecastLabel").textContent=(x.bias||scoreLabel(forecast,"forecast"))+" / 100";
+  el("scoreForecastLabel").className=cls(x.bias||scoreLabel(forecast,"forecast"));
+  el("scoreForecastNeedle").style.left=scoreLeft(forecast)+"%";
+
+  const preferred=["Trend","Momentum","Mean Reversion","Drivers"];
+  const labelMap={"Trend":"Trend","Momentum":"Momentum","Mean Reversion":"Mean Reversion","Drivers":"Drivers"};
+  const byName={};
+  (x.contributions||[]).forEach(function(v){byName[v.name]=Number(v.value)||0});
+  const vals=preferred.map(function(name){return {name:name,value:byName[name]||0}});
+  const maxAbs=Math.max(1,...vals.map(function(v){return Math.abs(v.value)}));
+  el("scoreRows").innerHTML=vals.map(function(v){
+    const w=Math.max(1,Math.abs(v.value)/maxAbs*50),c=scoreClass(v.value);
+    const pos=v.value>=0?"left:50%;width:"+w+"%":"right:50%;width:"+w+"%";
+    return '<div class="scoreRow"><span class="scoreName">'+labelMap[v.name]+'</span>'+
+      '<div class="scoreTrack"><i class="scoreBar '+c+'" style="'+pos+'"></i></div>'+
+      '<span class="scoreValue '+c+'">'+(v.value>0?"+":"")+v.value.toFixed(1)+'</span></div>';
+  }).join("");
+
+  const conflict=!!ex.hasConflict || ((ts.label||"NEUTRAL")!==(x.bias||"NEUTRAL"));
+  el("scoreDivergence").textContent=conflict?"신호 차이 있음":"방향 대체로 일치";
+  el("scoreDivergence").className="scoreDivergence"+(conflict?" alert":"");
+  el("scoreConclusion").textContent=x.forecastInterpretation||((x.bias||"NEUTRAL")+" 전망");
+  el("scoreNarrative").textContent=ex.conflictExplanation||
+    ("기술 추세 "+(tech>=0?"+":"")+tech.toFixed(1)+"점과 종합 예측 "+(forecast>=0?"+":"")+forecast.toFixed(1)+"점을 함께 해석합니다.");
 }
 function horizonView(h){
   const vals=[["상승",h.up,"updom"],["보합",h.flat,"flatdom"],["하락",h.down,"dndom"]].sort(function(a,b){return b[1]-a[1]});
@@ -492,17 +522,33 @@ function renderSide(x){
   el("signal").textContent=x.procurementSignal;el("signal").className="signalBig "+cls(x.bias);el("confbar").style.width=x.confidence+"%";
   const hz=x.horizons||[],h=hz[Math.min(2,hz.length-1)];
   el("signalText").textContent=h?h.label+" 기준 상승 "+(h.up*100).toFixed(0)+"% · 보합 "+(h.flat*100).toFixed(0)+"% · 하락 "+(h.down*100).toFixed(0)+"%. 기술적 추세와 Driver 신호를 함께 반영.":"";
-  el("contrib").innerHTML=(x.contributions||[]).map(function(v){
-    const width=Math.min(50,Math.abs(v.value)),pos=v.value>=0?"left:50%;width:"+width+"%":"right:50%;width:"+width+"%";
-    return '<div class="crow"><span>'+v.name+'</span><div class="track"><i style="'+pos+';background:'+(v.value>=0?'#3ddc97':'#ff6476')+'"></i></div><b class="'+(v.value>=0?'up':'dn')+'">'+(v.value>0?'+':'')+v.value+'</b></div>';
-  }).join("");
   el("drivers").innerHTML=(x.drivers||[]).map(function(d){
     return '<div class="driver"><div><b>'+d.label+'</b><em>'+d.code+' · lag corr '+d.corr+'</em></div><b class="'+(d.impact>=0?'up':'dn')+'">'+(d.impact>0?'+':'')+d.impact+'%</b></div>';
   }).join("")||'<div class="desc">Driver data pending</div>';
   const bt=x.backtest||{};
-  el("backtest").innerHTML=bt.sampleCount?
-    '<div class="bt"><small>Direction Accuracy</small><b>'+bt.directionAccuracy+'%</b></div><div class="bt"><small>Model Skill</small><b>'+bt.skill+'</b></div>'+
-    '<div class="bt"><small>MAE</small><b>'+bt.maePct+'%</b></div><div class="bt"><small>Samples</small><b>'+bt.sampleCount+'</b></div>':'<div class="desc">Backtest pending</div>';
+  const btHorizon=x.freq==="W"?"2W":"5D",btBand=x.freq==="W"?"±1.0%":"±0.5%";
+  if(bt.sampleCount){
+    el("backtest").innerHTML=
+      '<div class="bt"><small>Direction Accuracy</small><b>'+bt.directionAccuracy+'%</b><span class="btMetricNote">과거 상승·보합·하락 방향 적중률</span></div>'+
+      '<div class="bt"><small>Model Skill</small><b>'+bt.skill+'</b><span class="btMetricNote">정확도·가격오차·확률보정을 합친 내부 0–100 점수</span></div>'+
+      '<div class="bt"><small>MAE</small><b>'+bt.maePct+'%</b><span class="btMetricNote">예상 중심가와 실제가의 평균 절대오차</span></div>'+
+      '<div class="bt"><small>Samples</small><b>'+bt.sampleCount+'</b><span class="btMetricNote">워크포워드 검증에 사용한 과거 사례 수</span></div>';
+    el("backtestExplain").innerHTML='<b>Direction Accuracy는 미래 적중확률이 아닙니다.</b> 과거 각 시점에서 실제로 예측을 다시 계산한 뒤, '+btHorizon+' 후 가격방향을 비교한 적중 비율입니다. 실제 변동이 '+btBand+' 안이면 보합으로 판정합니다. Model Skill 역시 확률이 아니라 내부 성능지수입니다.';
+    if(Number(bt.sampleCount)<8){
+      el("backtestWarning").style.display="block";
+      el("backtestWarning").textContent="주의: 표본이 "+bt.sampleCount+"개로 매우 적어 Direction Accuracy와 Model Skill의 변동성이 큽니다. 현재 수치를 강한 신뢰도로 해석하지 마십시오.";
+    }else if(Number(bt.sampleCount)<15){
+      el("backtestWarning").style.display="block";
+      el("backtestWarning").textContent="표본이 "+bt.sampleCount+"개로 아직 제한적입니다. 방향 적중률은 참고 수준으로 해석하는 것이 적절합니다.";
+    }else{
+      el("backtestWarning").style.display="none";
+      el("backtestWarning").textContent="";
+    }
+  }else{
+    el("backtest").innerHTML='<div class="desc">Backtest pending</div>';
+    el("backtestExplain").textContent="충분한 과거 표본이 쌓이면 워크포워드 방식으로 방향 적중률과 가격오차를 계산합니다.";
+    el("backtestWarning").style.display="none";
+  }
   const st=x.staleness||{};
   el("fresh").textContent="Data freshness · "+(st.daysSinceAssessment==null?0:st.daysSinceAssessment)+"d since assessment · unchanged "+(st.unchangedPct20!==undefined?(st.unchangedPct20*100).toFixed(0):0)+"% of recent observations";
 

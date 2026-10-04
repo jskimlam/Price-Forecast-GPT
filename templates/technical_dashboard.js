@@ -205,13 +205,13 @@ function drawMacd(hist){
     scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#475569",font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
   }}});
   const last=hist.length?hist[hist.length-1]:{},prev=hist.length>1?hist[hist.length-2]:{};
-  const h=last.macdHist,macd=last.macd,sig=last.macdSignal,prevH=prev.macdHist;
+  const h=last.macdHist,macdNow=last.macd,sigNow=last.macdSignal,prevH=prev.macdHist;
   let label="■ 중립",kind="neutral",guide="MACD와 Signal선이 비슷하고 Histogram이 작으면 방향성이 약한 구간입니다.";
-  if(h!=null&&macd!=null&&sig!=null){
-    if(macd>sig&&h>0){
+  if(h!=null&&macdNow!=null&&sigNow!=null){
+    if(macdNow>sigNow&&h>0){
       if(prevH!=null&&h<prevH){label="▲ 상승 둔화";kind="bull";guide="MACD선이 Signal선 위지만 Histogram이 축소되고 있어 상승 추세는 유지되나 탄력이 약해지고 있습니다.";}
       else {label="▲ 상승 신호";kind="bull";guide="MACD선이 Signal선 위이고 양(+)의 Histogram이 확대되는 구간입니다. 상승 모멘텀이 강화되는 신호로 봅니다.";}
-    }else if(macd<sig&&h<0){
+    }else if(macdNow<sigNow&&h<0){
       if(prevH!=null&&h>prevH){label="▲ 하락 약화";kind="bull";guide="MACD선은 Signal선 아래지만 음(-)의 Histogram이 축소되고 있어 하락 압력이 약해지고 반등 가능성이 커지는 구간입니다.";}
       else {label="▼ 하락 신호";kind="bear";guide="MACD선이 Signal선 아래이고 음(-)의 Histogram이 확대되는 구간입니다. 하락 모멘텀이 강화되는 신호로 봅니다.";}
     }else if(h>0){label="▲ 반등 시도";kind="bull";guide="Histogram이 양(+)으로 전환되어 상승 전환 가능성을 확인하는 단계입니다.";}

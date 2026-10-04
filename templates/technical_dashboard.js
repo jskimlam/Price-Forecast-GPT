@@ -70,8 +70,11 @@ const probabilityLabels={
         if(!Number.isFinite(raw)||raw<=0)return;
         const p=bar.getProps(["x","y","base"],true);
         const cy=(p.y+p.base)/2;
-        ctx.font=(raw<10?"800 9px system-ui":"900 10px system-ui");
+        ctx.font=(raw<10?"900 11px system-ui":"950 13px system-ui");
         ctx.fillStyle="#ffffff";
+        ctx.strokeStyle="rgba(15,23,42,.48)";
+        ctx.lineWidth=3;
+        ctx.strokeText(Math.round(raw)+"%",p.x,cy);
         ctx.fillText(Math.round(raw)+"%",p.x,cy);
       });
     });
@@ -113,15 +116,94 @@ const forecastPriceLabels={
     ctx.restore();
   }
 };
-if(HAS_CHART) Chart.register(splitPlugin,probabilityLabels,forecastPriceLabels);
+const indicatorZones={
+  id:"indicatorZones",
+  beforeDatasetsDraw:function(chart,args,opts){
+    if(!opts||!opts.mode)return;
+    const ctx=chart.ctx,a=chart.chartArea,y=chart.scales.y;
+    if(!a||!y)return;
+    ctx.save();
+    if(opts.mode==="rsi"){
+      const y100=y.getPixelForValue(100),y70=y.getPixelForValue(70),y30=y.getPixelForValue(30),y0=y.getPixelForValue(0);
+      ctx.fillStyle="rgba(239,68,68,.10)";ctx.fillRect(a.left,y100,a.right-a.left,y70-y100);
+      ctx.fillStyle="rgba(100,116,139,.045)";ctx.fillRect(a.left,y70,a.right-a.left,y30-y70);
+      ctx.fillStyle="rgba(37,99,235,.09)";ctx.fillRect(a.left,y30,a.right-a.left,y0-y30);
+      ctx.fillStyle="#b91c1c";ctx.font="900 10px system-ui";ctx.textAlign="left";ctx.fillText("과열 70+",a.left+8,y100+14);
+      ctx.fillStyle="#64748b";ctx.fillText("중립",a.left+8,y.getPixelForValue(50)-5);
+      ctx.fillStyle="#155eab";ctx.fillText("냉각·과매도 30-",a.left+8,y30+15);
+    }
+    if(opts.mode==="macd"){
+      const zero=y.getPixelForValue(0);
+      ctx.fillStyle="rgba(239,68,68,.055)";ctx.fillRect(a.left,a.top,a.right-a.left,Math.max(0,zero-a.top));
+      ctx.fillStyle="rgba(37,99,235,.055)";ctx.fillRect(a.left,zero,a.right-a.left,Math.max(0,a.bottom-zero));
+      ctx.strokeStyle="rgba(51,65,85,.62)";ctx.lineWidth=1.2;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(a.left,zero);ctx.lineTo(a.right,zero);ctx.stroke();ctx.setLineDash([]);
+      ctx.font="900 10px system-ui";ctx.textAlign="left";
+      ctx.fillStyle="#b91c1c";ctx.fillText("상승 우위 (+)",a.left+8,a.top+14);
+      ctx.fillStyle="#155eab";ctx.fillText("하락 우위 (-)",a.left+8,a.bottom-8);
+      ctx.fillStyle="#475569";ctx.textAlign="right";ctx.fillText("0 중립선",a.right-6,zero-5);
+    }
+    ctx.restore();
+  }
+};
+const crossSignalLabels={
+  id:"crossSignalLabels",
+  afterDatasetsDraw:function(chart,args,opts){
+    if(!opts||!opts.enabled||!Array.isArray(opts.signals))return;
+    const ctx=chart.ctx,a=chart.chartArea,x=chart.scales.x,y=chart.scales.y;
+    ctx.save();ctx.font="900 9px system-ui";ctx.textAlign="center";
+    opts.signals.slice(-4).forEach(function(sig){
+      const px=x.getPixelForValue(sig.index),py=y.getPixelForValue(sig.value);
+      const up=sig.type==="bull";
+      ctx.fillStyle=up?"#b91c1c":"#155eab";
+      ctx.beginPath();
+      if(up){ctx.moveTo(px,py-8);ctx.lineTo(px-5,py+1);ctx.lineTo(px+5,py+1);}
+      else{ctx.moveTo(px,py+8);ctx.lineTo(px-5,py-1);ctx.lineTo(px+5,py-1);}
+      ctx.closePath();ctx.fill();
+      ctx.fillText(up?"상승전환":"하락전환",px,up?py-12:py+18);
+    });
+    ctx.restore();
+  }
+};
+if(HAS_CHART) Chart.register(splitPlugin,probabilityLabels,forecastPriceLabels,indicatorZones,crossSignalLabels);
 
+function addBusinessDays(dateText,n){
+  const d=new Date(String(dateText)+"T00:00:00");
+  let added=0;
+  while(added<n){
+    d.setDate(d.getDate()+1);
+    const day=d.getDay();
+    if(day!==0&&day!==6)added++;
+  }
+  return (d.getMonth()+1)+"/"+d.getDate();
+}
 function chartData(x){
   const hist=(x.history||[]).slice(-rangeBars(x.freq,state.range));
-  const future=state.forecast?(x.horizons||[]):[];
-  const labels=hist.map(function(r){return shortDate(r.date)}).concat(future.map(function(h){return shortDate(h.date||h.label)}));
-  const n=hist.length,ext=function(a){return a.concat(Array(future.length).fill(null))};
-  const last=hist.length?hist[hist.length-1].price:null,pad=Array(Math.max(0,n-1)).fill(null);
-  return {hist:hist,future:future,labels:labels,n:n,
+  const horizons=state.forecast?(x.horizons||[]):[];
+  const n=hist.length,last=hist.length?hist[hist.length-1].price:null;
+  const histLabels=hist.map(function(r){return shortDate(r.date)});
+  const maxBars=horizons.length?Math.max.apply(null,horizons.map(function(h){return Number(h.bars)||1})):0;
+  const futureSlots=[];
+  if(state.forecast&&maxBars>0){
+    for(let b=1;b<=maxBars;b++){
+      if(x.freq==="W"){
+        const base=new Date(String(x.lastDate)+"T00:00:00");base.setDate(base.getDate()+7*b);
+        futureSlots.push({bar:b,label:(base.getMonth()+1)+"/"+base.getDate()});
+      }else{
+        futureSlots.push({bar:b,label:addBusinessDays(x.lastDate,b)});
+      }
+    }
+  }
+  const labels=histLabels.concat(futureSlots.map(function(z){return z.label}));
+  const totalFuture=futureSlots.length;
+  const ext=function(a){return a.concat(Array(totalFuture).fill(null))};
+  const base=Array(Math.max(0,n-1)).fill(null).concat([last],Array(totalFuture).fill(null));
+  const fc=base.slice(),fh=base.slice(),fl=base.slice();
+  horizons.forEach(function(h){
+    const idx=n-1+(Number(h.bars)||1);
+    if(idx<fc.length){fc[idx]=h.center;fh[idx]=h.hi80;fl[idx]=h.lo80;}
+  });
+  return {hist:hist,future:horizons,labels:labels,n:n,futureSlots:futureSlots,
     actual:ext(hist.map(function(r){return r.price})),
     ma5:ext(hist.map(function(r){return r.ma5})),
     ma20:ext(hist.map(function(r){return r.ma20})),
@@ -129,9 +211,7 @@ function chartData(x){
     ma120:ext(hist.map(function(r){return r.ma120})),
     bbU:ext(hist.map(function(r){return r.bbUpper})),
     bbL:ext(hist.map(function(r){return r.bbLower})),
-    fc:state.forecast?pad.concat([last],future.map(function(h){return h.center})):[],
-    fh:state.forecast?pad.concat([last],future.map(function(h){return h.hi80})):[],
-    fl:state.forecast?pad.concat([last],future.map(function(h){return h.lo80})):[]
+    fc:state.forecast?fc:[],fh:state.forecast?fh:[],fl:state.forecast?fl:[]
   };
 }
 function drawPrice(x){
@@ -151,7 +231,7 @@ function drawPrice(x){
     sets.push(ds("80% Low",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
     sets.push(ds("Forecast",d.fc,"#e53935",{borderWidth:3.4,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4:0},pointHoverRadius:6,order:1}));
   }
-  const bounds=yRange(finite(sets.map(function(s){return s.data}))),tickLimit=window.innerWidth<700?6:10;
+  const bounds=yRange(finite(sets.map(function(s){return s.data}))),tickLimit=window.innerWidth<700?7:12;
   priceChart=new Chart(el("priceChart"),{type:"line",data:{labels:d.labels,datasets:sets},options:{
     responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},animation:{duration:250},
     plugins:{
@@ -171,12 +251,12 @@ function drawRsi(hist){
   if(rsiChart)rsiChart.destroy();
   const labels=hist.map(function(r){return shortDate(r.date)}),r=hist.map(function(v){return v.rsi});
   rsiChart=new Chart(el("rsiChart"),{type:"line",data:{labels:labels,datasets:[
-    ds("RSI",r,"#35c2ff",{borderWidth:1.7}),
+    ds("RSI",r,"#0284c7",{borderWidth:2.4}),
     ds("70",labels.map(function(){return 70}),"rgba(255,100,118,.55)",{borderWidth:1,borderDash:[4,4]}),
     ds("50",labels.map(function(){return 50}),"rgba(245,195,90,.28)",{borderWidth:1,borderDash:[3,5]}),
     ds("30",labels.map(function(){return 30}),"rgba(61,220,151,.55)",{borderWidth:1,borderDash:[4,4]})
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
-    plugins:{legend:{display:false}},scales:{x:{display:false},y:{position:"right",min:0,max:100,ticks:{stepSize:25,color:"#475569",font:{size:8}},grid:{color:"rgba(100,116,139,.18)"}}}
+    plugins:{legend:{display:false},indicatorZones:{mode:"rsi"}},scales:{x:{display:false},y:{position:"right",min:0,max:100,ticks:{stepSize:25,color:"#475569",font:{size:8}},grid:{color:"rgba(100,116,139,.18)"}}}
   }});
   const v=hist.length?hist[hist.length-1].rsi:null;
   const prev=hist.length>1?hist[hist.length-2].rsi:null;
@@ -200,8 +280,21 @@ function drawMacd(hist){
   const colors=bar.map(function(v){return v==null?"rgba(0,0,0,0)":v>=0?"rgba(61,220,151,.55)":"rgba(255,100,118,.55)"});
   macdChart=new Chart(el("macdChart"),{type:"line",data:{labels:labels,datasets:[
     {type:"bar",label:"Histogram",data:bar,backgroundColor:colors,borderWidth:0,barPercentage:.75,categoryPercentage:.9,order:3},
-    ds("MACD",macd,"#35c2ff",{borderWidth:1.5,order:1}),ds("Signal",sig,"#f5c35a",{borderWidth:1.3,order:2})
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},
+    ds("MACD",macd,"#0284c7",{borderWidth:2.2,order:1}),ds("Signal",sig,"#f59e0b",{borderWidth:1.9,order:2})
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{
+    legend:{display:false},
+    indicatorZones:{mode:"macd"},
+    crossSignalLabels:{enabled:true,signals:(function(){
+      const out=[];
+      for(let i=1;i<macd.length;i++){
+        if(macd[i-1]==null||sig[i-1]==null||macd[i]==null||sig[i]==null)continue;
+        const prevDiff=macd[i-1]-sig[i-1],nowDiff=macd[i]-sig[i];
+        if(prevDiff<=0&&nowDiff>0)out.push({index:i,value:macd[i],type:"bull"});
+        if(prevDiff>=0&&nowDiff<0)out.push({index:i,value:macd[i],type:"bear"});
+      }
+      return out;
+    })()}
+  },
     scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#475569",font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
   }}});
   const last=hist.length?hist[hist.length-1]:{},prev=hist.length>1?hist[hist.length-2]:{};

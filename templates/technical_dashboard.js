@@ -27,8 +27,9 @@ function marketCard(x){
   const t=(x.technicalState||{}).label||"NEUTRAL";
   return '<div class="mcard '+(x.code===current?'active':'')+'" data-code="'+x.code+'">'+
     '<div class="mname">'+x.label+'</div>'+
-    '<div class="mrow"><div class="mprice">'+fmt(x.last)+'</div><div class="bias '+cls(x.bias)+'">'+x.bias+'</div></div>'+
-    '<div class="mrow"><span style="font-size:8px;color:#6f8aa2">'+x.code+'</span><span class="bias '+cls(t)+'">TECH '+t+'</span></div></div>';
+    '<div class="mcode">'+x.code+'</div>'+
+    '<div class="mprice">'+fmt(x.last)+'</div>'+
+    '<div class="mstatus"><span class="'+cls(x.bias)+'">예측 '+x.bias+'</span><span class="'+cls(t)+'">기술 '+t+'</span></div></div>';
 }
 function renderMarket(){
   el("market").innerHTML=good.map(marketCard).join("");
@@ -53,7 +54,7 @@ const splitPlugin={id:"forecastSplit",afterDraw:function(chart,args,opts){
   const x=chart.scales.x.getPixelForValue(opts.index),ctx=chart.ctx,a=chart.chartArea;
   ctx.save();ctx.strokeStyle="rgba(53,194,255,.55)";ctx.setLineDash([5,5]);ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle="#6f9fbd";ctx.font="9px system-ui";ctx.fillText("FORECAST →",Math.min(x+7,a.right-64),a.top+12);ctx.restore();
+  ctx.fillStyle="#335d78";ctx.font="900 13px system-ui";ctx.fillText("예측 →",Math.min(x+8,a.right-58),a.top+16);ctx.restore();
 }};
 const probabilityLabels={
   id:"probabilityLabels",
@@ -85,7 +86,7 @@ const forecastPriceLabels={
   id:"forecastPriceLabels",
   afterDatasetsDraw:function(chart,args,opts){
     if(!opts||!opts.enabled)return;
-    const di=chart.data.datasets.findIndex(function(d){return d.label==="Forecast"});
+    const di=chart.data.datasets.findIndex(function(d){return d.label==="예측"});
     if(di<0)return;
     const ds=chart.data.datasets[di],meta=chart.getDatasetMeta(di),ctx=chart.ctx,start=opts.startIndex||0;
     ctx.save();
@@ -219,24 +220,24 @@ function chartData(x){
 function drawPrice(x){
   const d=chartData(x);
   if(priceChart)priceChart.destroy();
-  const sets=[ds("Actual Price",d.actual,"#111827",{borderWidth:3.2,pointHoverRadius:5,order:3})];
+  const sets=[ds("실가격",d.actual,"#0b0f19",{borderWidth:4.8,pointHoverRadius:6,order:3})];
   if(state.boll){
-    sets.push(ds("Bollinger Upper",d.bbU,"#64748b",{borderWidth:1.8,order:8}));
-    sets.push(ds("Bollinger Lower",d.bbL,"#64748b",{borderWidth:1.8,fill:"-1",backgroundColor:"rgba(100,116,139,.16)",order:9}));
+    sets.push(ds("볼린저 상단",d.bbU,"#64748b",{borderWidth:1.8,order:8}));
+    sets.push(ds("볼린저 하단",d.bbL,"#64748b",{borderWidth:1.8,fill:"-1",backgroundColor:"rgba(100,116,139,.16)",order:9}));
   }
   if(state.ma5)sets.push(ds("MA5",d.ma5,"#00a676",{borderWidth:2.6,order:5}));
   if(state.ma20)sets.push(ds("MA20",d.ma20,"#f59e0b",{borderWidth:2.6,order:5}));
   if(state.ma60)sets.push(ds("MA60",d.ma60,"#7c3aed",{borderWidth:2.6,order:5}));
   if(state.ma120)sets.push(ds("MA120",d.ma120,"#2563eb",{borderWidth:2.6,order:5}));
   if(state.forecast&&d.future.length){
-    sets.push(ds("80% High",d.fh,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],order:10}));
-    sets.push(ds("80% Low",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
-    sets.push(ds("Forecast",d.fc,"#e53935",{borderWidth:3.4,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4:0},pointHoverRadius:6,order:1}));
+    sets.push(ds("예측범위 상단 80%",d.fh,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],order:10}));
+    sets.push(ds("예측범위 하단 80%",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
+    sets.push(ds("예측",d.fc,"#e53935",{borderWidth:3.8,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4.5:0},pointHoverRadius:6,order:1}));
   }
   if(x.scenarios){
     const r=x.scenarios.bull&&Number(x.scenarios.bull.trigger),sp=x.scenarios.bear&&Number(x.scenarios.bear.trigger);
-    if(Number.isFinite(r))sets.push(ds("Resistance",d.labels.map(function(){return r}),"#dc2626",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
-    if(Number.isFinite(sp))sets.push(ds("Support",d.labels.map(function(){return sp}),"#2563eb",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
+    if(Number.isFinite(r))sets.push(ds("저항선",d.labels.map(function(){return r}),"#dc2626",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
+    if(Number.isFinite(sp))sets.push(ds("지지선",d.labels.map(function(){return sp}),"#2563eb",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
   }
   const bounds=yRange(finite(sets.map(function(s){return s.data}))),tickLimit=window.innerWidth<700?7:12;
   priceChart=new Chart(el("priceChart"),{type:"line",data:{labels:d.labels,datasets:sets},options:{
@@ -427,12 +428,12 @@ function render(){
   const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;
   renderMarket();el("asof").textContent=DB.asOf||"";el("model").textContent=DB.generatedBy||"";
   el("code").textContent=x.code;el("title").textContent=x.label;
-  el("meta").textContent=priceUnit(x)+" · "+(x.freq==="W"?"Weekly assessment":"Daily assessment")+" · Last assessment "+x.lastDate;
+  el("meta").textContent=x.code+" · "+priceUnit(x)+" · "+(x.freq==="W"?"주간 평가":"데일리 평가")+" · 최근 평가 "+x.lastDate;
   el("last").textContent=fmt(x.last);
   const tech=(x.technicalState||{}).label||"NEUTRAL";
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);
   el("bias").textContent=x.bias;el("bias").className=cls(x.bias);el("confidence").textContent=x.confidence+"%";el("regime").textContent=x.regime;
-  el("headlineBias").textContent=tech===x.bias?tech+" · CONFIRMED":"TECH "+tech+" / MODEL "+x.bias;
+  el("headlineBias").textContent=tech===x.bias?"기술·예측 "+tech+" · 일치":"기술 "+tech+" / 예측 "+x.bias;
   renderSignals(x);renderHorizon(x);renderSide(x);
   if(HAS_CHART){
     try{ drawPrice(x); }

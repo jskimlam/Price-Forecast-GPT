@@ -55,7 +55,65 @@ const splitPlugin={id:"forecastSplit",afterDraw:function(chart,args,opts){
   ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.setLineDash([]);
   ctx.fillStyle="#6f9fbd";ctx.font="9px system-ui";ctx.fillText("FORECAST →",Math.min(x+7,a.right-64),a.top+12);ctx.restore();
 }};
-if(HAS_CHART) Chart.register(splitPlugin);
+const probabilityLabels={
+  id:"probabilityLabels",
+  afterDatasetsDraw:function(chart,args,opts){
+    if(!opts||!opts.enabled)return;
+    const ctx=chart.ctx;
+    ctx.save();
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    chart.data.datasets.forEach(function(dataset,di){
+      const meta=chart.getDatasetMeta(di);
+      meta.data.forEach(function(bar,idx){
+        const raw=Number(dataset.data[idx]);
+        if(!Number.isFinite(raw)||raw<=0)return;
+        const p=bar.getProps(["x","y","base"],true);
+        const cy=(p.y+p.base)/2;
+        ctx.font=(raw<10?"800 9px system-ui":"900 10px system-ui");
+        ctx.fillStyle="#ffffff";
+        ctx.fillText(Math.round(raw)+"%",p.x,cy);
+      });
+    });
+    ctx.restore();
+  }
+};
+const forecastPriceLabels={
+  id:"forecastPriceLabels",
+  afterDatasetsDraw:function(chart,args,opts){
+    if(!opts||!opts.enabled)return;
+    const di=chart.data.datasets.findIndex(function(d){return d.label==="Forecast"});
+    if(di<0)return;
+    const ds=chart.data.datasets[di],meta=chart.getDatasetMeta(di),ctx=chart.ctx,start=opts.startIndex||0;
+    ctx.save();
+    ctx.font="900 10px system-ui";
+    ctx.textAlign="center";
+    ctx.textBaseline="bottom";
+    meta.data.forEach(function(pt,idx){
+      if(idx<start)return;
+      const value=Number(ds.data[idx]);
+      if(!Number.isFinite(value))return;
+      const pos=pt.getProps(["x","y"],true);
+      const text=fmt(value);
+      const w=ctx.measureText(text).width+10;
+      const h=18;
+      let x=pos.x-w/2,y=pos.y-27;
+      if(y<chart.chartArea.top+4)y=pos.y+12;
+      if(x<chart.chartArea.left)x=chart.chartArea.left;
+      if(x+w>chart.chartArea.right)x=chart.chartArea.right-w;
+      ctx.fillStyle="rgba(255,255,255,.96)";
+      ctx.strokeStyle="#e53935";
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.roundRect(x,y,w,h,5);
+      ctx.fill();ctx.stroke();
+      ctx.fillStyle="#b91c1c";
+      ctx.fillText(text,x+w/2,y+h-4);
+    });
+    ctx.restore();
+  }
+};
+if(HAS_CHART) Chart.register(splitPlugin,probabilityLabels,forecastPriceLabels);
 
 function chartData(x){
   const hist=(x.history||[]).slice(-rangeBars(x.freq,state.range));
@@ -81,8 +139,8 @@ function drawPrice(x){
   if(priceChart)priceChart.destroy();
   const sets=[ds("Actual Price",d.actual,"#111827",{borderWidth:3.2,pointHoverRadius:5,order:3})];
   if(state.boll){
-    sets.push(ds("Bollinger Upper",d.bbU,"#94a3b8",{borderWidth:1.5,order:8}));
-    sets.push(ds("Bollinger Lower",d.bbL,"#94a3b8",{borderWidth:1.5,fill:"-1",backgroundColor:"rgba(148,163,184,.12)",order:9}));
+    sets.push(ds("Bollinger Upper",d.bbU,"#64748b",{borderWidth:1.8,order:8}));
+    sets.push(ds("Bollinger Lower",d.bbL,"#64748b",{borderWidth:1.8,fill:"-1",backgroundColor:"rgba(100,116,139,.16)",order:9}));
   }
   if(state.ma5)sets.push(ds("MA5",d.ma5,"#00a676",{borderWidth:2.6,order:5}));
   if(state.ma20)sets.push(ds("MA20",d.ma20,"#f59e0b",{borderWidth:2.6,order:5}));
@@ -100,7 +158,7 @@ function drawPrice(x){
       legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:10,weight:"700"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
-      forecastSplit:{index:Math.max(0,d.n-1)}
+      forecastSplit:{index:Math.max(0,d.n-1)},forecastPriceLabels:{enabled:state.forecast,startIndex:d.n}
     },
     scales:{
       x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:10,weight:"600"},maxRotation:0}},
@@ -121,8 +179,19 @@ function drawRsi(hist){
     plugins:{legend:{display:false}},scales:{x:{display:false},y:{position:"right",min:0,max:100,ticks:{stepSize:25,color:"#475569",font:{size:8}},grid:{color:"rgba(100,116,139,.18)"}}}
   }});
   const v=hist.length?hist[hist.length-1].rsi:null;
-  el("rsiState").textContent=v==null?"":v>=70?"과매수 "+v.toFixed(1):v<=30?"과매도 "+v.toFixed(1):v>=50?"상승 모멘텀 "+v.toFixed(1):"약세 모멘텀 "+v.toFixed(1);
-  el("rsiState").className=v>=70?"dn":v<=30?"up":v>=50?"up":"dn";
+  const prev=hist.length>1?hist[hist.length-2].rsi:null;
+  let label="■ 중립",kind="neutral",guide="RSI 45~55는 방향성이 뚜렷하지 않은 중립 구간입니다.";
+  if(v!=null){
+    if(v>=70){label="▼ 과열 경계";kind="bear";guide="RSI가 70 이상입니다. 상승 추세는 강하지만 단기 과열로 조정·차익실현 가능성을 함께 봅니다.";}
+    else if(v<=30){label="▲ 반등 가능";kind="bull";guide="RSI가 30 이하 과매도 구간입니다. 하락 압력은 강했지만 기술적 반등 가능성이 커지는 구간입니다.";}
+    else if(v>=55){label=(prev!=null&&v<prev)?"▲ 상승 둔화":"▲ 상승 우위";kind="bull";guide=(prev!=null&&v<prev)?"RSI는 55 이상이지만 직전보다 낮아져 상승 모멘텀이 둔화되고 있습니다.":"RSI가 55 이상으로 상승 모멘텀이 우세합니다. 70 접근 시 과열 여부를 확인합니다.";}
+    else if(v<=45){label=(prev!=null&&v>prev)?"▲ 약세 완화":"▼ 하락 우위";kind=(prev!=null&&v>prev)?"bull":"bear";guide=(prev!=null&&v>prev)?"RSI는 45 이하이지만 직전보다 회복해 하락 압력이 약해지는 모습입니다.":"RSI가 45 이하로 약세 모멘텀이 우세합니다. 30 접근 시 과매도 여부를 확인합니다.";}
+  }
+  el("rsiState").textContent=v==null?"":label+" "+v.toFixed(1);
+  el("rsiState").className=kind==="bull"?"up":kind==="bear"?"dn":"flat";
+  el("rsiGuideSignal").textContent=label;
+  el("rsiGuideSignal").className="guideSignal "+kind;
+  el("rsiGuideText").textContent=guide;
 }
 function drawMacd(hist){
   if(macdChart)macdChart.destroy();
@@ -135,9 +204,24 @@ function drawMacd(hist){
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},
     scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#475569",font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
   }}});
-  const h=hist.length?hist[hist.length-1].macdHist:null;
-  el("macdState").textContent=h==null?"":h>0?"상승 압력 +"+h.toFixed(2):"하락 압력 "+h.toFixed(2);
-  el("macdState").className=h>0?"up":h<0?"dn":"flat";
+  const last=hist.length?hist[hist.length-1]:{},prev=hist.length>1?hist[hist.length-2]:{};
+  const h=last.macdHist,macd=last.macd,sig=last.macdSignal,prevH=prev.macdHist;
+  let label="■ 중립",kind="neutral",guide="MACD와 Signal선이 비슷하고 Histogram이 작으면 방향성이 약한 구간입니다.";
+  if(h!=null&&macd!=null&&sig!=null){
+    if(macd>sig&&h>0){
+      if(prevH!=null&&h<prevH){label="▲ 상승 둔화";kind="bull";guide="MACD선이 Signal선 위지만 Histogram이 축소되고 있어 상승 추세는 유지되나 탄력이 약해지고 있습니다.";}
+      else {label="▲ 상승 신호";kind="bull";guide="MACD선이 Signal선 위이고 양(+)의 Histogram이 확대되는 구간입니다. 상승 모멘텀이 강화되는 신호로 봅니다.";}
+    }else if(macd<sig&&h<0){
+      if(prevH!=null&&h>prevH){label="▲ 하락 약화";kind="bull";guide="MACD선은 Signal선 아래지만 음(-)의 Histogram이 축소되고 있어 하락 압력이 약해지고 반등 가능성이 커지는 구간입니다.";}
+      else {label="▼ 하락 신호";kind="bear";guide="MACD선이 Signal선 아래이고 음(-)의 Histogram이 확대되는 구간입니다. 하락 모멘텀이 강화되는 신호로 봅니다.";}
+    }else if(h>0){label="▲ 반등 시도";kind="bull";guide="Histogram이 양(+)으로 전환되어 상승 전환 가능성을 확인하는 단계입니다.";}
+    else if(h<0){label="▼ 약세 전환";kind="bear";guide="Histogram이 음(-)으로 전환되어 단기 약세 가능성을 확인하는 단계입니다.";}
+  }
+  el("macdState").textContent=h==null?"":label+" "+(h>=0?"+":"")+h.toFixed(2);
+  el("macdState").className=kind==="bull"?"up":kind==="bear"?"dn":"flat";
+  el("macdGuideSignal").textContent=label;
+  el("macdGuideSignal").className="guideSignal "+kind;
+  el("macdGuideText").textContent=guide;
 }
 function flag(label,value,type){
   const txt=type==="bull"?"상승":type==="bear"?"하락":"중립";
@@ -188,7 +272,7 @@ function drawProbability(x){
     type:"bar",
     data:{labels:labels,datasets:[
       {label:"상승",data:hz.map(function(h){return h.up*100}),backgroundColor:"#e53935",borderWidth:0,stack:"prob"},
-      {label:"보합",data:hz.map(function(h){return h.flat*100}),backgroundColor:"#f0a000",borderWidth:0,stack:"prob"},
+      {label:"보합",data:hz.map(function(h){return h.flat*100}),backgroundColor:"#7b8794",borderWidth:0,stack:"prob"},
       {label:"하락",data:hz.map(function(h){return h.down*100}),backgroundColor:"#1976d2",borderWidth:0,stack:"prob"}
     ]},
     options:{
@@ -196,7 +280,7 @@ function drawProbability(x){
       interaction:{mode:"index",intersect:false},
       plugins:{
         legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:14,boxHeight:14,padding:16,font:{size:10,weight:"700"}}},
-        tooltip:{backgroundColor:"#fff",titleColor:"#102638",bodyColor:"#102638",borderColor:"#cbd5e1",borderWidth:1,
+        probabilityLabels:{enabled:true},tooltip:{backgroundColor:"#fff",titleColor:"#102638",bodyColor:"#102638",borderColor:"#cbd5e1",borderWidth:1,
           callbacks:{
             label:function(c){return c.dataset.label+" "+c.parsed.y.toFixed(1)+"%"},
             afterBody:function(items){const idx=items[0].dataIndex,h=hz[idx];return ["예상가격 "+fmt(h.center),"80% 범위 "+fmt(h.lo80)+" – "+fmt(h.hi80)];}

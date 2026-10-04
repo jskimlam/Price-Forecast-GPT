@@ -215,9 +215,10 @@ def _build_outlook(item, frame, s):
     sample=int(bt.get("sampleCount") or 0)
     accuracy=bt.get("directionAccuracy")
     if sample>0 and accuracy is not None:
+        bt_horizon="5D" if freq=="D" else "2W"
         reliability=(
-            f"모델 신뢰도 {item.get('confidence',0)}%. 최근 동일가 비중 {unchanged:.0f}%, 평가 지연 {days}일, "
-            f"방향 백테스트 {accuracy}% / {sample}개 표본입니다."
+            f"모델 신뢰도 {item.get('confidence',0)}%. 최근 동일가 비중 {unchanged:.0f}%, 평가 지연 {days}일. "
+            f"과거 {bt_horizon} 방향 적중률은 {accuracy}% ({sample}개 워크포워드 표본)이며, 이는 다음 전망이 맞을 미래 확률을 뜻하지 않습니다."
         )
     else:
         reliability=(
@@ -233,8 +234,8 @@ def _build_outlook(item, frame, s):
 
     item["outlookExplanation"]={
         "summary":summary,
-        "technicalView":f"{tech} · 기술점수 {(item.get('technicalState') or {}).get('score',0):+.3f}",
-        "modelView":f"{bias} · {ref.get('label')} 중심가 {_fmt_price(base_target)} ({direction}) · 상승 {float(ref.get('up',0))*100:.0f}% / 보합 {float(ref.get('flat',0))*100:.0f}% / 하락 {float(ref.get('down',0))*100:.0f}%",
+        "technicalView":f"{tech} · 기술 추세 {(item.get('technicalState') or {}).get('score',0)*100:+.1f} / 100",
+        "modelView":f"{bias} · 종합 예측 {float(item.get('score') or 0)*100:+.1f} / 100 · {ref.get('label')} 중심가 {_fmt_price(base_target)} ({direction}) · 상승 {float(ref.get('up',0))*100:.0f}% / 보합 {float(ref.get('flat',0))*100:.0f}% / 하락 {float(ref.get('down',0))*100:.0f}%",
         "hasConflict":bool(conflict),
         "conflictExplanation":conflict_text,
         "upConfirmation":up_confirm,

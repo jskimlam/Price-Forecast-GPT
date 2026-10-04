@@ -111,6 +111,7 @@ def main():
     )
     (site/"index.html").write_text(html,encoding="utf-8")
     shutil.copy2(ROOT/"templates/admin.html",site/"admin.html")
+    shutil.copytree(ROOT/"assets",site/"assets",dirs_exist_ok=True)
     (site/".nojekyll").write_text("",encoding="utf-8")
 
     try:

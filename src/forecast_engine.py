@@ -114,7 +114,7 @@ def driver_signal(df: pd.DataFrame, target: str, variables: list, lookback=120):
         if c == target or c not in work.columns:
             continue
         raw = work[c].where(work[c] > 0)
-        aligned = raw.reindex(target_dates, method="ffill")
+        aligned = raw.ffill().reindex(target_dates, method="ffill")
         xret = np.log(aligned / aligned.shift(1))
         pair = pd.concat([xret.shift(1), yret], axis=1).dropna().tail(lookback)
         if len(pair) < 15:

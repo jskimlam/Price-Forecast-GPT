@@ -313,7 +313,7 @@ function drawPrice(x){
   priceChart=new Chart(el("priceChart"),{type:"line",data:{labels:d.labels,datasets:sets},options:{
     responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},animation:{duration:250},
     plugins:{
-      legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:11,weight:"700"}}},
+      legend:{position:"top",align:"start",labels:{color:"#1f2937",boxWidth:30,boxHeight:5,padding:18,font:{size:13,weight:"800"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
       forecastSplit:{index:Math.max(0,d.n-1)}

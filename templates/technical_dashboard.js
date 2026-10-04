@@ -475,7 +475,8 @@ function renderSide(x){
 function render(){
   const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;
   renderMarket();el("asof").textContent=DB.asOf||"";el("model").textContent=DB.generatedBy||"";
-  const pv=productView(x);el("title").textContent=pv.short;el("code").textContent=pv.market+" · "+x.code;\n  el("meta").textContent=priceUnit(x)+" · "+(x.freq==="W"?"주간 평가":"데일리 평가")+" · 최근 평가 "+x.lastDate;
+  const pv=productView(x);el("title").textContent=pv.short;el("code").textContent=pv.market+" · "+x.code;
+  el("meta").textContent=priceUnit(x)+" · "+(x.freq==="W"?"주간 평가":"데일리 평가")+" · 최근 평가 "+x.lastDate;
   el("last").textContent=fmt(x.last);
   const tech=(x.technicalState||{}).label||"NEUTRAL";
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);

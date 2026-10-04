@@ -129,7 +129,7 @@ function drawMacd(hist){
   const labels=hist.map(function(r){return shortDate(r.date)}),macd=hist.map(function(v){return v.macd}),
     sig=hist.map(function(v){return v.macdSignal}),bar=hist.map(function(v){return v.macdHist});
   const colors=bar.map(function(v){return v==null?"rgba(0,0,0,0)":v>=0?"rgba(61,220,151,.55)":"rgba(255,100,118,.55)"});
-  macdChart=new Chart(el("macdChart"),{data:{labels:labels,datasets:[
+  macdChart=new Chart(el("macdChart"),{type:"line",data:{labels:labels,datasets:[
     {type:"bar",label:"Histogram",data:bar,backgroundColor:colors,borderWidth:0,barPercentage:.75,categoryPercentage:.9,order:3},
     ds("MACD",macd,"#35c2ff",{borderWidth:1.5,order:1}),ds("Signal",sig,"#f5c35a",{borderWidth:1.3,order:2})
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},

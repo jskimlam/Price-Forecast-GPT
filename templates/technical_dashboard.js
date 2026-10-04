@@ -419,12 +419,19 @@ function horizonView(h){
   const vals=[["상승",h.up,"updom"],["보합",h.flat,"flatdom"],["하락",h.down,"dndom"]].sort(function(a,b){return b[1]-a[1]});
   return {name:vals[0][0],prob:vals[0][1],klass:vals[0][2]};
 }
+function forecastPriceClass(value,current){
+  const v=Number(value),c=Number(current);
+  if(!Number.isFinite(v)||!Number.isFinite(c))return "priceFlat";
+  if(v>c)return "priceUp";
+  if(v<c)return "priceDown";
+  return "priceFlat";
+}
 function renderHorizon(x){
   const hz=x.horizons||[];
   el("horizon").innerHTML=hz.map(function(h){
     const v=horizonView(h);
     return '<div class="hbox '+v.klass+'"><div class="t">'+h.label+' · '+(h.date||"")+'</div>'+
-      '<div class="directionLine"><div class="target">'+fmt(h.center)+'</div><span class="directionBadge '+v.klass+'">'+v.name+' '+(v.prob*100).toFixed(0)+'%</span></div>'+
+      '<div class="directionLine"><div class="target '+forecastPriceClass(h.center,x.last)+'">'+fmt(h.center)+'</div><span class="directionBadge '+v.klass+'">'+v.name+' '+(v.prob*100).toFixed(0)+'%</span></div>'+
       '<div class="prob"><span class="up">상승 '+(h.up*100).toFixed(0)+'%</span><span class="flat">보합 '+(h.flat*100).toFixed(0)+'%</span><span class="dn">하락 '+(h.down*100).toFixed(0)+'%</span></div>'+
       '<div class="range80">80% 예상범위 '+fmt(h.lo80)+' – '+fmt(h.hi80)+'</div></div>';
   }).join("");
@@ -470,7 +477,7 @@ function renderForecastTableBelow(x){
   if(!state.forecast||!hz.length){box.innerHTML="";box.style.display="none";return;}
   box.style.display="block";
   box.innerHTML='<div class="forecastTableBelowTitle">예측 가격 · 그래프 하단 정보</div><div class="forecastTableGrid">'+
-    hz.map(function(h){return '<div class="forecastMiniCell"><small>'+h.label+' · '+(h.date?shortDate(h.date):"")+'</small><b>'+fmt(h.center)+'</b><span>80% '+fmt(h.lo80)+'–'+fmt(h.hi80)+'</span></div>';}).join("")+
+    hz.map(function(h){return '<div class="forecastMiniCell"><small>'+h.label+' · '+(h.date?shortDate(h.date):"")+'</small><b class="'+forecastPriceClass(h.center,x.last)+'">'+fmt(h.center)+'</b><span>80% '+fmt(h.lo80)+'–'+fmt(h.hi80)+'</span></div>';}).join("")+
     '</div>';
 }
 

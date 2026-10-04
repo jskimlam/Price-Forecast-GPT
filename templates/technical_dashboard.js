@@ -444,7 +444,7 @@ function renderHorizon(x){
   }).join("");
   if(hz.length){
     const ref=hz[Math.min(2,hz.length-1)],v=horizonView(ref);
-    el("dominantOutlook").textContent=(ref.date||ref.label)+" · "+v.name+" "+(v.prob*100).toFixed(0)+"%";
+    el("dominantOutlook").textContent=(x.forecastInterpretation?x.forecastInterpretation+" · ":"")+(ref.date||ref.label)+" · "+v.name+" "+(v.prob*100).toFixed(0)+"%";
   }
   drawProbability(x);
 }
@@ -527,7 +527,7 @@ function render(){
   const tech=(x.technicalState||{}).label||"NEUTRAL";
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);
   el("bias").textContent=x.bias;el("bias").className=cls(x.bias);el("confidence").textContent=x.confidence+"%";el("regime").textContent=x.regime;
-  el("headlineBias").textContent=tech===x.bias?"기술·예측 "+tech+" · 일치":"기술 "+tech+" / 예측 "+x.bias;
+  el("headlineBias").textContent=x.forecastInterpretation?x.forecastInterpretation:(tech===x.bias?"기술·예측 "+tech+" · 일치":"기술 "+tech+" / 예측 "+x.bias);
   renderSignals(x);renderHorizon(x);renderSide(x);renderForecastTableBelow(x);
   if(HAS_CHART){
     try{ drawPrice(x); }

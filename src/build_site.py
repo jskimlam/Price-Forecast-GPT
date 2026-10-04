@@ -2,6 +2,7 @@ import json, os, shutil, time, urllib.parse, urllib.request, urllib.error
 import pandas as pd
 from .forecast_engine import ROOT, build_payload, load_variables
 from .backtest import run_backtest
+from .chart_data import attach_chart_data
 
 APPS_SCRIPT_URL = os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbxT7FlpEtmYYHReyeFI4KTJtoQGEG70mgJ-ihnbda3PaMsktsI9s0TQfrfXuWekputWwA/exec").strip()
 API_KEY = os.getenv("APPS_SCRIPT_API_KEY", "").strip()
@@ -74,13 +75,15 @@ def main():
     variables=load_variables()
     bt=run_backtest(pd.DataFrame(df),variables)
     payload=build_payload(df,variables=variables,backtest=bt)
+    payload=attach_chart_data(payload,df,variables)
 
-    tpl=(ROOT/"templates/index.html").read_text(encoding="utf-8")
+    tpl=(ROOT/"templates/technical_dashboard.html").read_text(encoding="utf-8")
     (site/"index.html").write_text(
         tpl.replace("__FORECAST_PAYLOAD__",json.dumps(payload,ensure_ascii=False)),
         encoding="utf-8"
     )
     shutil.copy2(ROOT/"templates/admin.html",site/"admin.html")
+    shutil.copy2(ROOT/"templates/technical_dashboard.js",site/"technical_dashboard.js")
     (site/".nojekyll").write_text("",encoding="utf-8")
 
     try:

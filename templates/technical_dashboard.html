@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Petrochem Forecast Engine</title>
 <script>__CHART_JS__</script>
+<script>__HTML2CANVAS_JS__</script>
 <style>
 :root{
   --bg:#04101d;--panel:#081a2b;--panel2:#0b2137;--line:#173a58;--line2:#214d70;
@@ -21,6 +22,13 @@ body{min-height:100vh}.shell{max-width:1840px;margin:auto;padding:18px}.top{disp
 .outlookSummary{font-size:14px;line-height:1.72;color:#d7e7f5;padding:11px 12px;border:1px solid #1d4665;border-radius:11px;background:#092239;margin-bottom:10px}
 .scenarioGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}.scenarioCard{border:1px solid #1b405c;border-radius:11px;padding:12px;background:#071a2a}.scenarioCard small{display:block;font-size:10px;color:#7895ad;font-weight:900;letter-spacing:.08em}.scenarioCard b{display:block;font-size:20px;margin:4px 0}.scenarioCard span{font-size:11.5px;line-height:1.45;color:#a9bfd1}.scenarioCard.bull b{color:#ff7b85}.scenarioCard.base b{color:#f5c35a}.scenarioCard.bear b{color:#62a9ff}
 .factorCols{display:grid;grid-template-columns:1fr 1fr;gap:8px}.factorBox{border-radius:10px;padding:10px;border:1px solid #173b56;background:#081a2a}.factorBox h4{font-size:11.5px;margin:0 0 7px}.factorBox ul{margin:0;padding-left:17px;color:#a9bfd1;font-size:12px;line-height:1.6}.factorBox.positive h4{color:#55e3ad}.factorBox.negative h4{color:#ff7b85}.levelComment{margin-top:10px;font-size:12.5px;line-height:1.6;color:#b7cadb}.scenarioNote{margin-top:6px;color:#6f8ba2;font-size:9.5px;line-height:1.45}.footer{text-align:center;color:#607a91;font-size:9px;padding:16px 0 4px}
+
+.captureBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #2f6f97;background:#0c3150;color:#dff5ff;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:900;cursor:pointer;margin-left:7px}.captureBtn:hover{background:#124263}.pheadActions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.forecastTableBelow{border-top:1px solid #dbe3ea;background:#f8fafc;padding:10px 12px 12px;color:#172b3b}.forecastTableBelowTitle{font-size:11px;font-weight:950;color:#334155;margin-bottom:7px}.forecastTableGrid{display:grid;grid-template-columns:repeat(5,minmax(95px,1fr));gap:6px}.forecastMiniCell{border:1px solid #dbe3ea;border-radius:8px;background:#fff;padding:8px 9px}.forecastMiniCell small{display:block;color:#64748b;font-size:9px;font-weight:800}.forecastMiniCell b{display:block;color:#b91c1c;font-size:15px;margin-top:2px}.forecastMiniCell span{display:block;color:#64748b;font-size:8.5px;margin-top:1px}
+
+.captureModal{position:fixed;inset:0;z-index:10000;background:rgba(2,9,15,.78);backdrop-filter:blur(5px);display:none;flex-direction:column}.captureModal.open{display:flex}.captureToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#071827;border-bottom:1px solid #244760;color:#fff}.captureToolbarTitle{font-size:15px;font-weight:900}.captureActions{display:flex;gap:7px;flex-wrap:wrap}.captureAction{border:1px solid #355d78;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:900;cursor:pointer;background:#0d2940;color:#e8f5ff}.captureAction.primary{background:#1d72d2;border-color:#1d72d2;color:#fff}.captureAction.share{background:#147b59;border-color:#147b59;color:#fff}.captureAction.close{background:#312026;border-color:#70404c;color:#ffdce2}.capturePreview{flex:1;overflow:auto;padding:18px;display:flex;justify-content:center;align-items:flex-start}.captureScaleWrap{transform-origin:top center}
+.captureSheet{width:1080px;min-height:1350px;background:#fff;color:#111;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;padding:54px 58px 34px;box-shadow:0 20px 70px rgba(0,0,0,.35)}.captureSheet *{box-sizing:border-box}.captureHeader h1{margin:0;font-size:45px;line-height:1.1;letter-spacing:-.04em}.captureHeader .captureSub{font-size:24px;color:#666;margin-top:10px}.captureSectionTitle{font-size:30px;font-weight:950;margin:28px 0 12px;letter-spacing:-.03em}.captureOutlook{margin-top:26px}.captureProbBar{display:flex;height:56px;border-radius:6px;overflow:hidden;margin:10px 0 8px}.captureProbBar .down{background:#2f7bd4}.captureProbBar .flat{background:#979792}.captureProbBar .up{background:#e84949}.captureProbLabels{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;font-size:30px;font-weight:950}.captureProbLabels .down{color:#2f7bd4;text-align:left}.captureProbLabels .flat{color:#8a8a86;text-align:center}.captureProbLabels .up{color:#e84949;text-align:right}.captureProbComment{font-size:24px;font-weight:900;margin-top:5px}.captureProbMeta{font-size:21px;color:#666;margin-top:5px}.captureChartTitle{font-size:25px;font-weight:950;margin:14px 0 4px}.captureChartWrap{height:230px;margin-top:5px;border-bottom:1px solid #ddd}.captureLevels{display:grid;grid-template-columns:1fr 95px 95px;gap:5px 12px;align-items:center;font-size:21px;margin-top:10px}.captureLevels .head{color:#777;text-align:center}.captureLevels .level{font-weight:850}.captureLevels .level.up{color:#e84949}.captureLevels .level.down{color:#2f7bd4}.captureLevels .pct{text-align:center;font-weight:900}.captureTech{font-size:22px;font-weight:900;margin-top:18px}.captureConclusion{font-size:23px;line-height:1.45;margin-top:8px}.captureDivider{border-top:1px solid #ccc;margin-top:28px;padding-top:10px}.captureDisclaimer{font-size:16px;color:#777;line-height:1.5}.captureMetaFooter{font-size:14px;color:#999;margin-top:18px}.captureBrand{font-size:14px;color:#777;margin-top:4px;text-align:right}
+@media(max-width:760px){.captureToolbar{padding:9px}.captureToolbarTitle{font-size:12px}.captureAction{padding:7px 9px;font-size:10px}.capturePreview{padding:8px}.captureBtn{padding:7px 9px;font-size:10px}.forecastTableGrid{display:flex;overflow-x:auto}.forecastMiniCell{min-width:118px}.pheadActions{justify-content:flex-end}.captureSheet{box-shadow:none}}
 @media(max-width:1220px){
   .market{grid-template-columns:repeat(4,1fr)}
   .layout{grid-template-columns:1fr}
@@ -100,7 +108,7 @@ body{min-height:100vh}.shell{max-width:1840px;margin:auto;padding:18px}.top{disp
           <div id="code" class="instrumentCode"></div>
           <div id="meta" class="meta"></div>
         </div>
-        <div id="headlineBias" class="status"></div>
+        <div class="pheadActions"><div id="headlineBias" class="status"></div><button id="captureModeBtn" class="captureBtn">📷 캡쳐모드</button></div>
       </div>
 
       <div class="topKpis">
@@ -132,7 +140,7 @@ body{min-height:100vh}.shell{max-width:1840px;margin:auto;padding:18px}.top{disp
         <div class="legendHint">실선=실가격 · 점선=예측 · 음영=80% 예측범위</div>
       </div>
 
-      <section class="forecastFocus"><div class="forecastTitleRow"><div><div class="eyebrow">날짜별 예측 전망</div><h3>상승·보합·하락 확률</h3><p>각 예측일의 방향 확률과 예상가격을 가장 먼저 확인합니다.</p></div><div id="dominantOutlook" class="status"></div></div><div id="horizon" class="horizon"></div><div class="probChartWrap"><canvas id="probChart"></canvas></div></section><div class="analysisCanvas"><div class="priceChart"><canvas id="priceChart"></canvas></div></div>
+      <section class="forecastFocus"><div class="forecastTitleRow"><div><div class="eyebrow">날짜별 예측 전망</div><h3>상승·보합·하락 확률</h3><p>각 예측일의 방향 확률과 예상가격을 가장 먼저 확인합니다.</p></div><div id="dominantOutlook" class="status"></div></div><div id="horizon" class="horizon"></div><div class="probChartWrap"><canvas id="probChart"></canvas></div></section><div class="analysisCanvas"><div class="priceChart"><canvas id="priceChart"></canvas></div><div id="forecastTableBelow" class="forecastTableBelow"></div></div>
 
       <div class="subcharts">
         <div class="subpanel">
@@ -196,6 +204,40 @@ body{min-height:100vh}.shell{max-width:1840px;margin:auto;padding:18px}.top{disp
 
   <div class="footer">Decision-support model only · Technical indicators and forecasts are probabilistic estimates, not guaranteed future prices.</div>
 </div>
+
+<div id="captureModal" class="captureModal" aria-hidden="true">
+  <div class="captureToolbar">
+    <div class="captureToolbarTitle">공유용 전망 카드</div>
+    <div class="captureActions">
+      <button id="captureSaveBtn" class="captureAction primary">PNG 저장</button>
+      <button id="captureShareBtn" class="captureAction share">공유</button>
+      <button id="captureCloseBtn" class="captureAction close">닫기</button>
+    </div>
+  </div>
+  <div id="capturePreview" class="capturePreview">
+    <div id="captureScaleWrap" class="captureScaleWrap">
+      <article id="captureSheet" class="captureSheet">
+        <header class="captureHeader">
+          <h1 id="capTitle"></h1>
+          <div id="capSub" class="captureSub"></div>
+        </header>
+        <section id="capOutlooks"></section>
+        <div class="captureChartTitle">최근 40봉 가격과 예측 범위</div>
+        <div class="captureChartWrap"><canvas id="captureChart"></canvas></div>
+        <div class="captureSectionTitle">가격대별 확률 (종가 기준)</div>
+        <div id="capLevels" class="captureLevels"></div>
+        <div id="capTech" class="captureTech"></div>
+        <div id="capConclusion" class="captureConclusion"></div>
+        <div class="captureDivider">
+          <div class="captureDisclaimer">자동 계산 결과이며 확률적 가정 기반의 의사결정 보조자료입니다. 실제 가격은 시장 여건에 따라 달라질 수 있습니다.</div>
+          <div id="capMetaFooter" class="captureMetaFooter"></div>
+          <div class="captureBrand">Produced by JS Kim with GPT</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
 <script>window.DB=__FORECAST_PAYLOAD__;</script>
 <script>__DASHBOARD_JS__</script>
 </body>

@@ -105,7 +105,8 @@ def main():
         encoding="utf-8"
     )
     shutil.copy2(ROOT/"templates/admin.html",site/"admin.html")
-    shutil.copy2(ROOT/"templates/technical_dashboard.js",site/"technical_dashboard.js")\n    shutil.copy2(ROOT/"node_modules/chart.js/dist/chart.umd.js",site/"chart.umd.js")
+    shutil.copy2(ROOT/"templates/technical_dashboard.js",site/"technical_dashboard.js")
+    shutil.copy2(ROOT/"node_modules/chart.js/dist/chart.umd.js",site/"chart.umd.js")
     (site/".nojekyll").write_text("",encoding="utf-8")
 
     try:

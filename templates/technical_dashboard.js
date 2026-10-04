@@ -1,12 +1,16 @@
+try{
 const DB=window.DB||{items:[]};
 const good=(DB.items||[]).filter(function(x){return !x.error});
 let current=(good.find(function(x){return x.code==="AAMFI00"})||good[0]||{}).code;
 let priceChart,rsiChart,macdChart;
 const state={range:"3M",ma5:true,ma20:true,ma60:true,ma120:true,boll:true,forecast:true};
 
-Chart.defaults.color="#8aa2b8";
-Chart.defaults.borderColor="rgba(42,76,103,.22)";
-Chart.defaults.font.family='Inter,Pretendard,"Noto Sans KR",system-ui,-apple-system,sans-serif';
+const HAS_CHART = typeof window.Chart !== "undefined";
+if(HAS_CHART){
+  Chart.defaults.color="#8aa2b8";
+  Chart.defaults.borderColor="rgba(42,76,103,.22)";
+  Chart.defaults.font.family='Inter,Pretendard,"Noto Sans KR",system-ui,-apple-system,sans-serif';
+}
 
 function el(id){return document.getElementById(id)}
 function fmt(x){const n=Number(x);return Number.isFinite(n)?n.toLocaleString(undefined,{maximumFractionDigits:n>=1000?1:2}):"—"}
@@ -51,7 +55,7 @@ const splitPlugin={id:"forecastSplit",afterDraw:function(chart,args,opts){
   ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.setLineDash([]);
   ctx.fillStyle="#6f9fbd";ctx.font="9px system-ui";ctx.fillText("FORECAST →",Math.min(x+7,a.right-64),a.top+12);ctx.restore();
 }};
-Chart.register(splitPlugin);
+if(HAS_CHART) Chart.register(splitPlugin);
 
 function chartData(x){
   const hist=(x.history||[]).slice(-rangeBars(x.freq,state.range));
@@ -191,7 +195,17 @@ function render(){
   el("technicalTrend").textContent=tech;el("technicalTrend").className=cls(tech);
   el("bias").textContent=x.bias;el("bias").className=cls(x.bias);el("confidence").textContent=x.confidence+"%";el("regime").textContent=x.regime;
   el("headlineBias").textContent=tech===x.bias?tech+" · CONFIRMED":"TECH "+tech+" / MODEL "+x.bias;
-  renderSignals(x);renderHorizon(x);renderSide(x);drawPrice(x);
+  renderSignals(x);renderHorizon(x);renderSide(x);
+  if(HAS_CHART){
+    try{ drawPrice(x); }
+    catch(err){
+      const box=el("runtimeError");
+      if(box){box.style.display="block";box.textContent="Chart render error: "+(err&&err.message?err.message:String(err));}
+    }
+  }else{
+    const box=el("runtimeError");
+    if(box){box.style.display="block";box.textContent="Chart.js failed to load. Market data and forecast values are still available below.";}
+  }
 }
 document.querySelectorAll(".ctl.range").forEach(function(b){b.onclick=function(){
   state.range=b.dataset.range;document.querySelectorAll(".ctl.range").forEach(function(x){x.classList.toggle("active",x.dataset.range===state.range)});render();
@@ -200,3 +214,8 @@ document.querySelectorAll(".ctl.overlay").forEach(function(b){b.onclick=function
   const k=b.dataset.overlay;state[k]=!state[k];b.classList.toggle("active",state[k]);render();
 }});
 render();
+}catch(err){
+  const b=document.getElementById("runtimeError");
+  if(b){b.style.display="block";b.textContent="Dashboard startup error: "+(err&&err.message?err.message:String(err));}
+  console.error(err);
+}

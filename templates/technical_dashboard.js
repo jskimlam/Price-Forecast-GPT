@@ -231,17 +231,22 @@ function drawPrice(x){
     sets.push(ds("80% Low",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
     sets.push(ds("Forecast",d.fc,"#e53935",{borderWidth:3.4,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4:0},pointHoverRadius:6,order:1}));
   }
+  if(x.scenarios){
+    const r=x.scenarios.bull&&Number(x.scenarios.bull.trigger),sp=x.scenarios.bear&&Number(x.scenarios.bear.trigger);
+    if(Number.isFinite(r))sets.push(ds("Resistance",d.labels.map(function(){return r}),"#dc2626",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
+    if(Number.isFinite(sp))sets.push(ds("Support",d.labels.map(function(){return sp}),"#2563eb",{borderWidth:1.4,borderDash:[3,5],pointRadius:0,order:12}));
+  }
   const bounds=yRange(finite(sets.map(function(s){return s.data}))),tickLimit=window.innerWidth<700?7:12;
   priceChart=new Chart(el("priceChart"),{type:"line",data:{labels:d.labels,datasets:sets},options:{
     responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},animation:{duration:250},
     plugins:{
-      legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:10,weight:"700"}}},
+      legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:11,weight:"700"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
       forecastSplit:{index:Math.max(0,d.n-1)},forecastPriceLabels:{enabled:state.forecast,startIndex:d.n}
     },
     scales:{
-      x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:10,weight:"600"},maxRotation:0}},
+      x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:11,weight:"600"},maxRotation:0}},
       y:{position:"right",min:bounds.min,max:bounds.max,grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#334155",font:{size:10,weight:"600"},callback:function(v){return fmt(v)}}}
     }
   }});
@@ -403,6 +408,18 @@ function renderSide(x){
     '<div class="bt"><small>MAE</small><b>'+bt.maePct+'%</b></div><div class="bt"><small>Samples</small><b>'+bt.sampleCount+'</b></div>':'<div class="desc">Backtest pending</div>';
   const st=x.staleness||{};
   el("fresh").textContent="Data freshness · "+(st.daysSinceAssessment==null?0:st.daysSinceAssessment)+"d since assessment · unchanged "+(st.unchangedPct20!==undefined?(st.unchangedPct20*100).toFixed(0):0)+"% of recent observations";
+
+  const ex=x.outlookExplanation||{},sc=x.scenarios||{};
+  el("outlookSummary").textContent=ex.summary||"현재 데이터 기준 전망 근거를 계산 중입니다.";
+  const base=sc.base||{},bull=sc.bull||{},bear=sc.bear||{};
+  el("scenarioGrid").innerHTML=
+    '<div class="scenarioCard base"><small>BASE · '+(sc.reference||"")+'</small><b>'+fmt(base.target)+'</b><span>중심 시나리오 · 보합/중립 '+((Number(base.prob)||0)*100).toFixed(0)+'%</span></div>'+
+    '<div class="scenarioCard bull"><small>BULL · 상방 돌파</small><b>'+fmt(bull.target)+'</b><span>'+fmt(bull.trigger)+' 돌파 시 · 상승 방향 '+((Number(bull.prob)||0)*100).toFixed(0)+'%</span></div>'+
+    '<div class="scenarioCard bear"><small>BEAR · 지지 이탈</small><b>'+fmt(bear.target)+'</b><span>'+fmt(bear.trigger)+' 이탈 시 · 하락 방향 '+((Number(bear.prob)||0)*100).toFixed(0)+'%</span></div>';
+  el("positiveFactors").innerHTML=(ex.positiveFactors||[]).map(function(v){return "<li>"+v+"</li>"}).join("")||"<li>뚜렷한 추가 상승 요인은 제한적</li>";
+  el("negativeFactors").innerHTML=(ex.negativeFactors||[]).map(function(v){return "<li>"+v+"</li>"}).join("")||"<li>뚜렷한 추가 하락 요인은 제한적</li>";
+  el("levelComment").textContent=ex.levelComment||"";
+  el("scenarioNote").textContent=sc.note||"";
 }
 function render(){
   const x=good.find(function(z){return z.code===current})||good[0];if(!x)return;

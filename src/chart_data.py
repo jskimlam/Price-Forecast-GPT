@@ -151,8 +151,96 @@ def _build_outlook(item, frame, s):
         f"{dominant[0]} 확률 {dominant[1]*100:.0f}%가 가장 높습니다. "
         f"상단은 {_fmt_price(resistance1)} 돌파 여부, 하단은 {_fmt_price(support1)} 지지 여부가 핵심입니다."
     )
+    contrib_map={str(v.get("name")):float(v.get("value") or 0) for v in (item.get("contributions") or [])}
+    mr=contrib_map.get("Mean Reversion",0.0)
+    mom=contrib_map.get("Momentum",0.0)
+    trend_c=contrib_map.get("Trend",0.0)
+    drv=contrib_map.get("Drivers",0.0)
+
+    direction="상승" if base_target>last else "하락" if base_target<last else "보합"
+    conflict=(tech=="BEARISH" and base_target>last) or (tech=="BULLISH" and base_target<last)
+
+    if conflict and tech=="BEARISH":
+        conflict_text=(
+            f"기술적 추세는 BEARISH지만 중심가격은 {direction}으로 계산됐습니다. "
+            f"이는 추세 기여 {trend_c:+.1f}, 모멘텀 {mom:+.1f}보다 평균회귀 {mr:+.1f}"
+            f"{'와 Driver '+format(drv,'+.1f') if abs(drv)>=0.1 else ''}가 반등 방향으로 작동했기 때문입니다. "
+            "따라서 이를 추세 상승으로 해석하지 않고 '약세 추세 속 반등 시도'로 봅니다."
+        )
+    elif conflict and tech=="BULLISH":
+        conflict_text=(
+            f"기술적 추세는 BULLISH지만 중심가격은 {direction}으로 계산됐습니다. "
+            f"추세 기여 {trend_c:+.1f}에도 평균회귀 {mr:+.1f}, 모멘텀 {mom:+.1f}"
+            f"{' 및 Driver '+format(drv,'+.1f') if abs(drv)>=0.1 else ''}가 단기 조정 방향으로 작동했습니다. "
+            "따라서 이를 추세 하락 전환이 아니라 '상승 추세 속 조정 가능성'으로 해석합니다."
+        )
+    else:
+        conflict_text=(
+            f"기술상태 {tech}와 모델 중심경로가 대체로 같은 방향입니다. "
+            f"Trend {trend_c:+.1f}, Momentum {mom:+.1f}, Mean Reversion {mr:+.1f}, Drivers {drv:+.1f}의 종합 결과입니다."
+        )
+
+    ma5_val=_num(latest.get("ma5"))
+    macd_hist=_num(latest.get("macdHist"))
+    if tech=="BEARISH":
+        up_confirm=(
+            f"상승 확인은 가격이 MA5 {_fmt_price(ma5_val)} 회복, MACD Histogram의 음(-) 폭 축소/양(+) 전환, "
+            f"저항 {_fmt_price(resistance1)} 돌파가 순차적으로 확인될 때 신뢰도가 높아집니다."
+        )
+        down_confirm=(
+            f"반대로 지지 {_fmt_price(support1)} 이탈과 MACD 약세 확대가 이어지면 현재 반등 시나리오는 무효화되고 "
+            f"{_fmt_price(bear_target)} 영역의 하방 시나리오가 우세해집니다."
+        )
+    elif tech=="BULLISH":
+        up_confirm=(
+            f"상승 지속은 MA5 {_fmt_price(ma5_val)} 위 유지, MACD 양(+) 흐름 유지, "
+            f"저항 {_fmt_price(resistance1)} 돌파 시 확인 강도가 높아집니다."
+        )
+        down_confirm=(
+            f"가격이 지지 {_fmt_price(support1)} 아래로 밀리고 MACD가 약세 전환하면 "
+            f"{_fmt_price(bear_target)} 영역까지 단기 조정 가능성을 봅니다."
+        )
+    else:
+        up_confirm=(
+            f"중립 구간에서는 MA5 {_fmt_price(ma5_val)} 회복과 저항 {_fmt_price(resistance1)} 돌파가 상승 확인 조건입니다."
+        )
+        down_confirm=(
+            f"지지 {_fmt_price(support1)} 이탈과 MACD 약세 확대가 동시에 나타나면 하락 시나리오 우선순위가 높아집니다."
+        )
+
+    st=item.get("staleness") or {}
+    unchanged=float(st.get("unchangedPct20") or 0)*100
+    days=int(st.get("daysSinceAssessment") or 0)
+    bt=item.get("backtest") or {}
+    sample=int(bt.get("sampleCount") or 0)
+    accuracy=bt.get("directionAccuracy")
+    if sample>0 and accuracy is not None:
+        reliability=(
+            f"모델 신뢰도 {item.get('confidence',0)}%. 최근 동일가 비중 {unchanged:.0f}%, 평가 지연 {days}일, "
+            f"방향 백테스트 {accuracy}% / {sample}개 표본입니다."
+        )
+    else:
+        reliability=(
+            f"모델 신뢰도 {item.get('confidence',0)}%. 최근 동일가 비중 {unchanged:.0f}%, 평가 지연 {days}일. "
+            "백테스트 표본이 충분하지 않으면 방향확률을 강한 확신으로 해석하지 않습니다."
+        )
+
+    top_drivers=sorted((item.get("drivers") or []), key=lambda d:abs(float(d.get("impact") or 0)), reverse=True)[:3]
+    driver_text=" · ".join([
+        f"{d.get('label')} {(float(d.get('impact') or 0)):+.3f}%"
+        for d in top_drivers
+    ]) or "유의미한 선행 Driver 신호 제한적"
+
     item["outlookExplanation"]={
         "summary":summary,
+        "technicalView":f"{tech} · 기술점수 {(item.get('technicalState') or {}).get('score',0):+.3f}",
+        "modelView":f"{bias} · {ref.get('label')} 중심가 {_fmt_price(base_target)} ({direction}) · 상승 {float(ref.get('up',0))*100:.0f}% / 보합 {float(ref.get('flat',0))*100:.0f}% / 하락 {float(ref.get('down',0))*100:.0f}%",
+        "hasConflict":bool(conflict),
+        "conflictExplanation":conflict_text,
+        "upConfirmation":up_confirm,
+        "downConfirmation":down_confirm,
+        "driverSummary":driver_text,
+        "reliability":reliability,
         "positiveFactors":positives[:4],
         "negativeFactors":negatives[:4],
         "levelComment":(

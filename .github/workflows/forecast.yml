@@ -12,10 +12,13 @@ on:
         default: ""
   schedule:
     - cron: "10 23 * * 0-4"
-  workflow_run:
-    workflows: ["pages build and deployment"]
-    types: [completed]
+  push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "templates/**"
+      - "data/variables.json"
+      - ".github/workflows/forecast.yml"
 permissions:
   contents: read
   pages: write
@@ -25,15 +28,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

@@ -2,7 +2,7 @@ try{
 const DB=window.DB||{items:[]};
 const good=(DB.items||[]).filter(function(x){return !x.error});
 let current=(good.find(function(x){return x.code==="AAMFI00"})||good[0]||{}).code;
-let priceChart,rsiChart,macdChart;
+let priceChart,rsiChart,macdChart,probChart;
 const state={range:"3M",ma5:true,ma20:true,ma60:true,ma120:true,boll:true,forecast:true};
 
 const HAS_CHART = typeof window.Chart !== "undefined";
@@ -79,32 +79,32 @@ function chartData(x){
 function drawPrice(x){
   const d=chartData(x);
   if(priceChart)priceChart.destroy();
-  const sets=[ds("Actual",d.actual,"#eef7ff",{borderWidth:2.2,pointHoverRadius:4,order:3})];
+  const sets=[ds("Actual Price",d.actual,"#111827",{borderWidth:3.2,pointHoverRadius:5,order:3})];
   if(state.boll){
-    sets.push(ds("Bollinger Upper",d.bbU,"rgba(92,148,190,.40)",{borderWidth:1,order:8}));
-    sets.push(ds("Bollinger Lower",d.bbL,"rgba(92,148,190,.40)",{borderWidth:1,fill:"-1",backgroundColor:"rgba(64,126,170,.08)",order:9}));
+    sets.push(ds("Bollinger Upper",d.bbU,"#94a3b8",{borderWidth:1.5,order:8}));
+    sets.push(ds("Bollinger Lower",d.bbL,"#94a3b8",{borderWidth:1.5,fill:"-1",backgroundColor:"rgba(148,163,184,.12)",order:9}));
   }
-  if(state.ma5)sets.push(ds("MA5",d.ma5,"#3ddc97",{borderWidth:1.3,order:5}));
-  if(state.ma20)sets.push(ds("MA20",d.ma20,"#f5c35a",{borderWidth:1.4,order:5}));
-  if(state.ma60)sets.push(ds("MA60",d.ma60,"#b38cff",{borderWidth:1.5,order:5}));
-  if(state.ma120)sets.push(ds("MA120",d.ma120,"#ff9f43",{borderWidth:1.5,order:5}));
+  if(state.ma5)sets.push(ds("MA5",d.ma5,"#00a676",{borderWidth:2.6,order:5}));
+  if(state.ma20)sets.push(ds("MA20",d.ma20,"#f59e0b",{borderWidth:2.6,order:5}));
+  if(state.ma60)sets.push(ds("MA60",d.ma60,"#7c3aed",{borderWidth:2.6,order:5}));
+  if(state.ma120)sets.push(ds("MA120",d.ma120,"#2563eb",{borderWidth:2.6,order:5}));
   if(state.forecast&&d.future.length){
-    sets.push(ds("80% High",d.fh,"rgba(53,194,255,.28)",{borderWidth:1,borderDash:[5,4],order:10}));
-    sets.push(ds("80% Low",d.fl,"rgba(53,194,255,.28)",{borderWidth:1,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(53,194,255,.10)",order:11}));
-    sets.push(ds("Forecast",d.fc,"#35c2ff",{borderWidth:3,borderDash:[7,4],pointRadius:function(c){return c.dataIndex>=d.n?3:0},pointHoverRadius:5,order:1}));
+    sets.push(ds("80% High",d.fh,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],order:10}));
+    sets.push(ds("80% Low",d.fl,"rgba(229,57,53,.34)",{borderWidth:1.2,borderDash:[5,4],fill:"-1",backgroundColor:"rgba(229,57,53,.10)",order:11}));
+    sets.push(ds("Forecast",d.fc,"#e53935",{borderWidth:3.4,borderDash:[8,4],pointRadius:function(c){return c.dataIndex>=d.n?4:0},pointHoverRadius:6,order:1}));
   }
   const bounds=yRange(finite(sets.map(function(s){return s.data}))),tickLimit=window.innerWidth<700?6:10;
   priceChart=new Chart(el("priceChart"),{type:"line",data:{labels:d.labels,datasets:sets},options:{
     responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},animation:{duration:250},
     plugins:{
-      legend:{position:"top",align:"start",labels:{boxWidth:15,boxHeight:2,font:{size:9}}},
+      legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:22,boxHeight:4,padding:14,font:{size:10,weight:"700"}}},
       tooltip:{backgroundColor:"#071827",borderColor:"#26516f",borderWidth:1,titleColor:"#dff4ff",bodyColor:"#c4d7e7",
         callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.parsed.y)}}},
       forecastSplit:{index:Math.max(0,d.n-1)}
     },
     scales:{
-      x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#69849b",font:{size:9},maxRotation:0}},
-      y:{position:"right",min:bounds.min,max:bounds.max,grid:{color:"rgba(42,76,103,.22)"},ticks:{color:"#7895ac",font:{size:9},callback:function(v){return fmt(v)}}}
+      x:{grid:{display:false},ticks:{maxTicksLimit:tickLimit,color:"#4b5d6c",font:{size:10,weight:"600"},maxRotation:0}},
+      y:{position:"right",min:bounds.min,max:bounds.max,grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#334155",font:{size:10,weight:"600"},callback:function(v){return fmt(v)}}}
     }
   }});
   drawRsi(d.hist);drawMacd(d.hist);
@@ -118,7 +118,7 @@ function drawRsi(hist){
     ds("50",labels.map(function(){return 50}),"rgba(245,195,90,.28)",{borderWidth:1,borderDash:[3,5]}),
     ds("30",labels.map(function(){return 30}),"rgba(61,220,151,.55)",{borderWidth:1,borderDash:[4,4]})
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
-    plugins:{legend:{display:false}},scales:{x:{display:false},y:{position:"right",min:0,max:100,ticks:{stepSize:25,font:{size:8}},grid:{color:"rgba(42,76,103,.18)"}}}
+    plugins:{legend:{display:false}},scales:{x:{display:false},y:{position:"right",min:0,max:100,ticks:{stepSize:25,color:"#475569",font:{size:8}},grid:{color:"rgba(100,116,139,.18)"}}}
   }});
   const v=hist.length?hist[hist.length-1].rsi:null;
   el("rsiState").textContent=v==null?"":v>=70?"과매수 "+v.toFixed(1):v<=30?"과매도 "+v.toFixed(1):v>=50?"상승 모멘텀 "+v.toFixed(1):"약세 모멘텀 "+v.toFixed(1);
@@ -133,7 +133,7 @@ function drawMacd(hist){
     {type:"bar",label:"Histogram",data:bar,backgroundColor:colors,borderWidth:0,barPercentage:.75,categoryPercentage:.9,order:3},
     ds("MACD",macd,"#35c2ff",{borderWidth:1.5,order:1}),ds("Signal",sig,"#f5c35a",{borderWidth:1.3,order:2})
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},
-    scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(42,76,103,.18)"},ticks:{font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
+    scales:{x:{display:false},y:{position:"right",grid:{color:"rgba(100,116,139,.18)"},ticks:{color:"#475569",font:{size:8},callback:function(v){return Number(v).toFixed(1)}}}
   }}});
   const h=hist.length?hist[hist.length-1].macdHist:null;
   el("macdState").textContent=h==null?"":h>0?"상승 압력 +"+h.toFixed(2):"하락 압력 "+h.toFixed(2);
@@ -160,12 +160,54 @@ function renderSignals(x){
   el("techComposite").textContent=ts.label;el("techComposite").className=cls(ts.label);
   el("techScore").textContent=(ts.score>=0?"+":"")+Number(ts.score||0).toFixed(2);
 }
+function horizonView(h){
+  const vals=[["상승",h.up,"updom"],["보합",h.flat,"flatdom"],["하락",h.down,"dndom"]].sort(function(a,b){return b[1]-a[1]});
+  return {name:vals[0][0],prob:vals[0][1],klass:vals[0][2]};
+}
 function renderHorizon(x){
-  el("horizon").innerHTML=(x.horizons||[]).map(function(h){
-    return '<div class="hbox"><div class="t">'+h.label+' Forecast · '+(h.date||"")+'</div><div class="target">'+fmt(h.center)+'</div>'+
-      '<div class="prob"><span class="up">▲ '+(h.up*100).toFixed(0)+'%</span><span class="flat">● '+(h.flat*100).toFixed(0)+'%</span><span class="dn">▼ '+(h.down*100).toFixed(0)+'%</span></div>'+
-      '<div class="range80">80% '+fmt(h.lo80)+' – '+fmt(h.hi80)+'</div></div>';
+  const hz=x.horizons||[];
+  el("horizon").innerHTML=hz.map(function(h){
+    const v=horizonView(h);
+    return '<div class="hbox '+v.klass+'"><div class="t">'+h.label+' · '+(h.date||"")+'</div>'+
+      '<div class="directionLine"><div class="target">'+fmt(h.center)+'</div><span class="directionBadge '+v.klass+'">'+v.name+' '+(v.prob*100).toFixed(0)+'%</span></div>'+
+      '<div class="prob"><span class="up">상승 '+(h.up*100).toFixed(0)+'%</span><span class="flat">보합 '+(h.flat*100).toFixed(0)+'%</span><span class="dn">하락 '+(h.down*100).toFixed(0)+'%</span></div>'+
+      '<div class="range80">80% 예상범위 '+fmt(h.lo80)+' – '+fmt(h.hi80)+'</div></div>';
   }).join("");
+  if(hz.length){
+    const ref=hz[Math.min(2,hz.length-1)],v=horizonView(ref);
+    el("dominantOutlook").textContent=(ref.date||ref.label)+" · "+v.name+" "+(v.prob*100).toFixed(0)+"%";
+  }
+  drawProbability(x);
+}
+function drawProbability(x){
+  if(!HAS_CHART)return;
+  if(probChart)probChart.destroy();
+  const hz=x.horizons||[];
+  const labels=hz.map(function(h){return h.date?shortDate(h.date):h.label});
+  probChart=new Chart(el("probChart"),{
+    type:"bar",
+    data:{labels:labels,datasets:[
+      {label:"상승",data:hz.map(function(h){return h.up*100}),backgroundColor:"#e53935",borderWidth:0,stack:"prob"},
+      {label:"보합",data:hz.map(function(h){return h.flat*100}),backgroundColor:"#f0a000",borderWidth:0,stack:"prob"},
+      {label:"하락",data:hz.map(function(h){return h.down*100}),backgroundColor:"#1976d2",borderWidth:0,stack:"prob"}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{position:"top",align:"start",labels:{color:"#263746",boxWidth:14,boxHeight:14,padding:16,font:{size:10,weight:"700"}}},
+        tooltip:{backgroundColor:"#fff",titleColor:"#102638",bodyColor:"#102638",borderColor:"#cbd5e1",borderWidth:1,
+          callbacks:{
+            label:function(c){return c.dataset.label+" "+c.parsed.y.toFixed(1)+"%"},
+            afterBody:function(items){const idx=items[0].dataIndex,h=hz[idx];return ["예상가격 "+fmt(h.center),"80% 범위 "+fmt(h.lo80)+" – "+fmt(h.hi80)];}
+          }}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:"#334155",font:{size:10,weight:"700"}}},
+        y:{stacked:true,min:0,max:100,grid:{color:"rgba(100,116,139,.16)"},ticks:{color:"#475569",callback:function(v){return v+"%"}}}
+      }
+    }
+  });
 }
 function renderSide(x){
   el("signal").textContent=x.procurementSignal;el("signal").className="signalBig "+cls(x.bias);el("confbar").style.width=x.confidence+"%";

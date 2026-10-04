@@ -18,6 +18,7 @@ on:
       - "src/**"
       - "templates/**"
       - "data/variables.json"
+      - "requirements.txt"
       - ".github/workflows/forecast.yml"
 permissions:
   contents: read

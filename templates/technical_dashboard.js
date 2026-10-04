@@ -36,7 +36,7 @@ function ds(label,data,color,opts){
   opts=opts||{};
   return Object.assign({label:label,data:data,borderColor:color,backgroundColor:color,borderWidth:opts.borderWidth==null?1.5:opts.borderWidth,
     pointRadius:opts.pointRadius==null?0:opts.pointRadius,pointHoverRadius:opts.pointHoverRadius==null?3:opts.pointHoverRadius,
-    tension:opts.tension==null?.18:opts.tension,spanGaps:true},opts);
+    tension:opts.tension==null ? 0.18 : opts.tension,spanGaps:true},opts);
 }
 function finite(list){return list.flat().filter(function(v){return Number.isFinite(v)})}
 function yRange(vals){

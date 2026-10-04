@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Petrochem Forecast Engine</title>
-<script src="./chart.umd.js"></script>
+<script>__CHART_JS__</script>
 <style>
 :root{
   --bg:#04101d;--panel:#081a2b;--panel2:#0b2137;--line:#173a58;--line2:#214d70;
@@ -23,7 +23,7 @@ body{min-height:100vh}.shell{max-width:1720px;margin:auto;padding:16px}.top{disp
 @media(min-width:700px) and (max-width:1050px){.layout{grid-template-columns:minmax(0,1.5fr) minmax(290px,.6fr)}.side{display:flex}.market{grid-template-columns:repeat(4,1fr)}.priceChart{height:360px}}
 </style>
 </head>
-<body>
+<body><div id="runtimeError" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;padding:12px 14px;border-radius:10px;background:#47151b;color:#ffd7dc;border:1px solid #a73b4b;font:12px system-ui"></div><script>window.addEventListener("error",function(e){var b=document.getElementById("runtimeError");if(b){b.style.display="block";b.textContent="Runtime error: "+(e.message||"unknown")+" @ "+(e.filename||"")+" : "+(e.lineno||"");}});</script>
 <div class="shell">
   <header class="top">
     <div class="brand">
@@ -134,6 +134,6 @@ body{min-height:100vh}.shell{max-width:1720px;margin:auto;padding:16px}.top{disp
   <div class="footer">Decision-support model only · Technical indicators and forecasts are probabilistic estimates, not guaranteed future prices.</div>
 </div>
 <script>window.DB=__FORECAST_PAYLOAD__;</script>
-<script src="./technical_dashboard.js"></script>
+<script>__DASHBOARD_JS__</script>
 </body>
 </html>

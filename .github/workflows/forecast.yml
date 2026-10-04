@@ -1,0 +1,52 @@
+name: forecast
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Trigger source
+        required: false
+        default: manual
+      requested_at:
+        description: Request timestamp
+        required: false
+        default: ""
+  schedule:
+    - cron: "10 23 * * 0-4"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "templates/**"
+      - "data/variables.json"
+      - ".github/workflows/forecast.yml"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: price-forecast-pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Build forecast dashboard
+        env:
+          APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbxT7FlpEtmYYHReyeFI4KTJtoQGEG70mgJ-ihnbda3PaMsktsI9s0TQfrfXuWekputWwA/exec
+          APPS_SCRIPT_API_KEY: ${{ secrets.APPS_SCRIPT_API_KEY }}
+        run: python -m src.build_site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

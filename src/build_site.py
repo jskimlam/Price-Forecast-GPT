@@ -39,7 +39,7 @@ def load_live():
 
 def history_rows(payload):
     out=[]
-    now=pd.Timestamp.utcnow().isoformat()
+    now=pd.Timestamp.now("UTC").isoformat()
     run_id=f"{payload['asOf']}-ensemble-v1.1"
     for item in payload["items"]:
         if item.get("error"):
@@ -55,7 +55,7 @@ def history_rows(payload):
     return out
 
 def score_rows(payload):
-    now=pd.Timestamp.utcnow().isoformat(); out=[]
+    now=pd.Timestamp.now("UTC").isoformat(); out=[]
     for item in payload["items"]:
         bt=item.get("backtest") or {}
         if item.get("error") or not bt.get("sampleCount"):

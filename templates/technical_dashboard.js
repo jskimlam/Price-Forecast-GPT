@@ -94,8 +94,10 @@ const forecastPriceLabels={
     ctx.textBaseline="bottom";
     meta.data.forEach(function(pt,idx){
       if(idx<start)return;
-      const value=Number(ds.data[idx]);
-      if(!Number.isFinite(value))return;
+      const raw=ds.data[idx];
+      if(raw===null || raw===undefined || raw==="")return;
+      const value=Number(raw);
+      if(!Number.isFinite(value) || value===0)return;
       const pos=pt.getProps(["x","y"],true);
       const text=fmt(value);
       const w=ctx.measureText(text).width+10;

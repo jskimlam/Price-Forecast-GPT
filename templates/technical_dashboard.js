@@ -52,7 +52,7 @@ const PRODUCT_VIEW={
   PHASM05:{short:"BZ",market:"FOB Korea"},
   AAWWK00:{short:"Propylene",market:"CFR China"},
   PHAOO00:{short:"ACN",market:"CFR FE Asia"},
-  BTNEA00:{short:"BD",market:"CFR NE Asia"},
+  AAWWL00:{short:"BD",market:"CFR China"},
   PHBIF00:{short:"PP",market:"Inj · CFR FE Asia"},
   PHAIL00:{short:"PS",market:"GP · CFR China"},
   PHAIR00:{short:"HIPS",market:"CFR China"},

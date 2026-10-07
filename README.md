@@ -4,7 +4,7 @@
 
 ## Forecast Targets
 
-NMCL001 WTI · PAAAD00 Naphtha · AAMFI00 SM CFR China · AAOTM00 Ethylene · PHASM05 Benzene · AAWWK00 Propylene · PHAOO00 ACN · BTNEA00 Butadiene NEA · PHBIF00 PP · PHAIL00 PS · PHAIR00 HIPS · PHAHF00 ABS
+NMCL001 WTI · PAAAD00 Naphtha · AAMFI00 SM CFR China · AAOTM00 Ethylene · PHASM05 Benzene · AAWWK00 Propylene · PHAOO00 ACN · AAWWL00 Butadiene CFR China · PHBIF00 PP · PHAIL00 PS · PHAIR00 HIPS · PHAHF00 ABS
 
 ## Architecture
 

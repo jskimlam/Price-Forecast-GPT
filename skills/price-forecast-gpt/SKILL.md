@@ -58,7 +58,7 @@ Google Sheet DB:
 - PHASM05 Benzene FOB Korea
 - AAWWK00 Propylene CFR China
 - PHAOO00 ACN CFR FE Asia Weekly
-- BTNEA00 Butadiene CFR NE Asia
+- AAWWL00 Butadiene CFR China
 - PHBIF00 PP Injection CFR FE Asia
 - PHAIL00 PS GP CFR China Weekly
 - PHAIR00 HIPS CFR China Weekly

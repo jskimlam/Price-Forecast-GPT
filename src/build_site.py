@@ -94,6 +94,7 @@ def score_rows(payload):
 def main():
     site=ROOT/"site"; site.mkdir(exist_ok=True)
     df=load_live()
+    print('Source assessment rows:', len(df), 'latest:', df['AssessDate'].max())
     variables=load_variables()
     bt=run_backtest(pd.DataFrame(df),variables)
     payload=build_payload(df,variables=variables,backtest=bt)

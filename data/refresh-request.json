@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "request_id": "2026-10-12-settlement-and-commodity-prices",
+  "as_of_date": "2026-10-12",
+  "data_source": "Price-Forecast-GPT_DB / prices",
+  "source_rows": [
+    "2026-10-12",
+    "2026-10-09"
+  ],
+  "new_assessments": 23,
+  "reason": "User-provided 27-column 2026-10-12/2026-10-09 input; blank weekly assessments preserved"
+}

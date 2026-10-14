@@ -268,5 +268,45 @@
     "group": "Resins",
     "freq": "W",
     "target": true
+  },
+  {
+    "code": "AAUNF04",
+    "label": "Acetic Acid FOB China",
+    "name": "Acetic Acid FOB China Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Acetic Acid",
+    "freq": "W",
+    "target": false
+  },
+  {
+    "code": "PHAOI00",
+    "label": "Acetic Acid CFR SE Asia",
+    "name": "Acetic Acid CFR SE Asia Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "Acetic Acid",
+    "freq": "W",
+    "target": false
+  },
+  {
+    "code": "PHAOK00",
+    "label": "VAM CFR China",
+    "name": "VAM CFR China Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "VAM",
+    "freq": "W",
+    "target": false
+  },
+  {
+    "code": "PHAOM00",
+    "label": "VAM CFR SE Asia",
+    "name": "VAM CFR SE Asia Weekly",
+    "unit": "MT",
+    "currency": "USD",
+    "group": "VAM",
+    "freq": "W",
+    "target": false
   }
 ]

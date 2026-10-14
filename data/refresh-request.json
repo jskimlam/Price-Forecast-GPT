@@ -1,12 +1,26 @@
 {
   "schema": 1,
-  "request_id": "2026-10-12-settlement-and-commodity-prices",
-  "as_of_date": "2026-10-12",
+  "request_id": "2026-10-13-wti-and-petrochem-prices",
+  "as_of_date": "2026-10-13",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-12",
-    "2026-10-09"
+    "2026-10-13"
   ],
-  "new_assessments": 23,
-  "reason": "User-provided 27-column 2026-10-12/2026-10-09 input; blank weekly assessments preserved"
+  "new_assessments": 24,
+  "registered_new_drivers": [
+    "AAUNF04",
+    "PHAOI00",
+    "PHAOK00",
+    "PHAOM00"
+  ],
+  "missing_assessments": [
+    "PHAIL00",
+    "PHAIR00",
+    "PHAHF00",
+    "AAUNF04",
+    "PHAOI00",
+    "PHAOK00",
+    "PHAOM00"
+  ],
+  "reason": "User-provided 2026-10-13 31-indicator price table. Blank fields remain unassessed; new weekly drivers configured without invented prices."
 }

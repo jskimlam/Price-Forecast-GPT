@@ -1,20 +1,26 @@
 {
   "schema": 1,
-  "request_id": "2026-10-14-wti-and-petrochemical-settlements",
-  "as_of_date": "2026-10-14",
+  "request_id": "2026-10-15-price-assessments",
+  "as_of_date": "2026-10-15",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-14"
+    "2026-10-15"
   ],
-  "new_assessments": 24,
+  "new_assessments": 18,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
     "PHAOO00",
+    "AAVCA00",
+    "PCACG00",
+    "PHBIF00",
+    "PHAIL00",
+    "PHAIR00",
+    "PHAHF00",
     "AAUNF04",
     "PHAOI00",
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "User-provided 31-indicator 2026-10-14 row. 24 assessed values added to the private Google Sheet; seven unassessed fields remain empty. Recompute forecast without changing algorithm or publishing licensed source prices."
+  "reason": "The user supplied 21 codes for October 15, 18 of which were assessed. Missing values and all unlisted price columns stay blank. Recalculate forecasts using private Sheet history."
 }

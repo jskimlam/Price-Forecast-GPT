@@ -1,19 +1,14 @@
 {
   "schema": 1,
-  "request_id": "2026-10-15-price-assessments",
-  "as_of_date": "2026-10-15",
+  "request_id": "2026-10-16-wti-and-commodity-assessments",
+  "as_of_date": "2026-10-16",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-15"
+    "2026-10-16"
   ],
-  "new_assessments": 18,
+  "new_assessments": 23,
   "missing_assessments": [
-    "AAIKW00",
-    "AAKYD00",
     "PHAOO00",
-    "AAVCA00",
-    "PCACG00",
-    "PHBIF00",
     "PHAIL00",
     "PHAIR00",
     "PHAHF00",
@@ -22,5 +17,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "The user supplied 21 codes for October 15, 18 of which were assessed. Missing values and all unlisted price columns stay blank. Recalculate forecasts using private Sheet history."
+  "reason": "User supplied 2026-10-16 assessments across 31 columns. Use 23 observed values; keep missing weekly assessment entries blank. Rebuild private-source forecasts without changing algorithm or publishing licensed data."
 }

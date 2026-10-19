@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "request_id": "2026-10-19-commodity-price-assessments",
+  "request_id": "2026-10-19-wti-month-correction-103-66",
   "as_of_date": "2026-10-19",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
@@ -19,5 +19,13 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "User-supplied October 19 prices across 31 columns: 21 observed values, 10 unassessed. Preserve blank fields and price history. NMCL001=98.54, PCACG00=103.66 are distinct codes; do not reconcile without source verification. Recompute forecasts without changing the model or publishing licensed price data."
+  "reason": "Correct the user-specified 2026-10-19 front-month NYMEX WTI assessment from 98.54 to 103.66 in the private sheet. PCACG00 remains 103.66; all other prices/dates unchanged. Rebuild forecasts, charts and backtest using corrected source.",
+  "corrected_assessments": [
+    {
+      "date": "2026-10-19",
+      "code": "NMCL001",
+      "old_value": 98.54,
+      "new_value": 103.66
+    }
+  ]
 }

@@ -1,12 +1,14 @@
 {
   "schema": 1,
-  "request_id": "2026-10-19-wti-month-correction-103-66",
-  "as_of_date": "2026-10-19",
+  "request_id": "2026-10-22-three-trading-days",
+  "as_of_date": "2026-10-22",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-19"
+    "2026-10-20",
+    "2026-10-21",
+    "2026-10-22"
   ],
-  "new_assessments": 21,
+  "new_assessments": 75,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
@@ -19,13 +21,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Correct the user-specified 2026-10-19 front-month NYMEX WTI assessment from 98.54 to 103.66 in the private sheet. PCACG00 remains 103.66; all other prices/dates unchanged. Rebuild forecasts, charts and backtest using corrected source.",
-  "corrected_assessments": [
-    {
-      "date": "2026-10-19",
-      "code": "NMCL001",
-      "old_value": 98.54,
-      "new_value": 103.66
-    }
-  ]
+  "reason": "Rebuild forecasts from 75 private Google Sheets observations across Oct 20-22 2026. Preserve all missing assessments, driver data and distinct WTI price markers; do not alter forecasting model."
 }

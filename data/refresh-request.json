@@ -1,14 +1,12 @@
 {
   "schema": 1,
-  "request_id": "2026-10-22-three-trading-days",
-  "as_of_date": "2026-10-22",
+  "request_id": "2026-10-23-price-refresh",
+  "as_of_date": "2026-10-23",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-20",
-    "2026-10-21",
-    "2026-10-22"
+    "2026-10-23"
   ],
-  "new_assessments": 75,
+  "new_assessments": 21,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
@@ -21,5 +19,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Rebuild forecasts from 75 private Google Sheets observations across Oct 20-22 2026. Preserve all missing assessments, driver data and distinct WTI price markers; do not alter forecasting model."
+  "reason": "Rebuild using new 2026-10-23 private data and preserve missing assessments."
 }

@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "request_id": "2026-10-23-price-refresh",
-  "as_of_date": "2026-10-23",
+  "request_id": "2026-10-26-price-refresh",
+  "as_of_date": "2026-10-26",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-23"
+    "2026-10-26"
   ],
   "new_assessments": 21,
   "missing_assessments": [
@@ -19,5 +19,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Rebuild using new 2026-10-23 private data and preserve missing assessments."
+  "reason": "Rebuild using verified 2026-10-26 private assessments; preserve empty values and prior histories. NMCL001 and PCACG00 are both 101.76."
 }

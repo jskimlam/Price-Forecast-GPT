@@ -1,16 +1,15 @@
 {
   "schema": 1,
-  "request_id": "2026-10-26-price-refresh",
-  "as_of_date": "2026-10-26",
+  "request_id": "2026-10-27-price-refresh",
+  "as_of_date": "2026-10-27",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-26"
+    "2026-10-27"
   ],
-  "new_assessments": 21,
+  "new_assessments": 22,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
-    "PHAOO00",
     "PHAIL00",
     "PHAIR00",
     "PHAHF00",
@@ -19,5 +18,6 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Rebuild using verified 2026-10-26 private assessments; preserve empty values and prior histories. NMCL001 and PCACG00 are both 101.76."
+  "date_note": "The user-supplied assessment date rendered as ####### in the original table; interpreted as 2026-10-27 based on latest DB 2026-10-26 and current date 2026-10-28.",
+  "reason": "Recompute forecasts and walk-forward backtests using 22 user-provided private assessments for Oct 27; keep nine unassessed fields empty. NMCL001 and PCACG00 are both 99.90 per input; no model math changes."
 }

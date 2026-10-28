@@ -1,23 +1,20 @@
 {
   "schema": 1,
-  "request_id": "2026-10-27-price-refresh",
-  "as_of_date": "2026-10-27",
+  "request_id": "2026-10-28-price-refresh",
+  "as_of_date": "2026-10-28",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-27"
+    "2026-10-28"
   ],
-  "new_assessments": 22,
+  "new_assessments": 24,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
-    "PHAIL00",
-    "PHAIR00",
-    "PHAHF00",
+    "PHAOO00",
     "AAUNF04",
     "PHAOI00",
     "PHAOK00",
     "PHAOM00"
   ],
-  "date_note": "The user-supplied assessment date rendered as ####### in the original table; interpreted as 2026-10-27 based on latest DB 2026-10-26 and current date 2026-10-28.",
-  "reason": "Recompute forecasts and walk-forward backtests using 22 user-provided private assessments for Oct 27; keep nine unassessed fields empty. NMCL001 and PCACG00 are both 99.90 per input; no model math changes."
+  "reason": "Recalculate forecasts and backtests using 2026-10-28 private assessed prices. Leave 7 unavailable indicators missing. NYMEX WTI NMCL001 and Cushing PCACG00 both 102.78; no changes to forecasting formulas or source-price licensing."
 }

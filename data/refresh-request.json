@@ -1,20 +1,20 @@
 {
   "schema": 1,
-  "request_id": "2026-10-28-price-refresh",
-  "as_of_date": "2026-10-28",
+  "request_id": "2026-10-29-price-refresh",
+  "as_of_date": "2026-10-29",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-28"
+    "2026-10-29"
   ],
   "new_assessments": 24,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
     "PHAOO00",
-    "AAUNF04",
-    "PHAOI00",
-    "PHAOK00",
-    "PHAOM00"
+    "PCACG00",
+    "PHAIL00",
+    "PHAIR00",
+    "PHAHF00"
   ],
-  "reason": "Recalculate forecasts and backtests using 2026-10-28 private assessed prices. Leave 7 unavailable indicators missing. NYMEX WTI NMCL001 and Cushing PCACG00 both 102.78; no changes to forecasting formulas or source-price licensing."
+  "reason": "Rebuild with Oct 29 private source prices. PCACG00 awaits input due connector issue; use last observed driver with staleness penalty."
 }

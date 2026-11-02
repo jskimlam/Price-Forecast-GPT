@@ -1,11 +1,9 @@
 {
   "schema": 1,
-  "request_id": "2026-11-02-price-refresh-corrected-wti",
+  "request_id": "2026-11-02-wti-settlement-correction",
   "as_of_date": "2026-11-02",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-29",
-    "2026-10-30",
     "2026-11-02"
   ],
   "new_assessments": 41,
@@ -23,5 +21,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Rebuild forecasting models from verified private sheet after Oct 29 price correction, Oct 30 gap fill, and Nov 2 assessments. Use user-corrected Nov 2 NYMEX WTI value; retain missing Cushing assessment and other unassessed cells. Keep proprietary raw prices out of public git."
+  "reason": "Rebuild forecasts using the updated November 2 WTI settlement in private Google Sheets; leave all other prices and model settings unchanged."
 }

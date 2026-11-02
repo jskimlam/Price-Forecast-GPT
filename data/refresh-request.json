@@ -1,12 +1,15 @@
 {
   "schema": 1,
-  "request_id": "2026-10-29-price-refresh",
-  "as_of_date": "2026-10-29",
+  "request_id": "2026-11-02-price-refresh-corrected-wti",
+  "as_of_date": "2026-11-02",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-10-29"
+    "2026-10-29",
+    "2026-10-30",
+    "2026-11-02"
   ],
-  "new_assessments": 24,
+  "new_assessments": 41,
+  "corrected_assessments": 1,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
@@ -14,7 +17,11 @@
     "PCACG00",
     "PHAIL00",
     "PHAIR00",
-    "PHAHF00"
+    "PHAHF00",
+    "AAUNF04",
+    "PHAOI00",
+    "PHAOK00",
+    "PHAOM00"
   ],
-  "reason": "Rebuild with Oct 29 private source prices. PCACG00 awaits input due connector issue; use last observed driver with staleness penalty."
+  "reason": "Rebuild forecasting models from verified private sheet after Oct 29 price correction, Oct 30 gap fill, and Nov 2 assessments. Use user-corrected Nov 2 NYMEX WTI value; retain missing Cushing assessment and other unassessed cells. Keep proprietary raw prices out of public git."
 }

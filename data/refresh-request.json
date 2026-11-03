@@ -1,18 +1,15 @@
 {
   "schema": 1,
-  "request_id": "2026-11-02-wti-settlement-correction",
-  "as_of_date": "2026-11-02",
+  "request_id": "2026-11-03-daily-price-refresh",
+  "as_of_date": "2026-11-03",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-11-02"
+    "2026-11-03"
   ],
-  "new_assessments": 41,
-  "corrected_assessments": 1,
+  "new_assessments": 22,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
-    "PHAOO00",
-    "PCACG00",
     "PHAIL00",
     "PHAIR00",
     "PHAHF00",
@@ -21,5 +18,5 @@
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Rebuild forecasts using the updated November 2 WTI settlement in private Google Sheets; leave all other prices and model settings unchanged."
+  "reason": "Recalculate the existing forecasts and backtests after 22 verified privately stored 2026-11-03 price assessments. Preserve nine unassessed fields and all previous historical values. Treat NMCL001 and PCACG00 separately; do not publish licensed raw market tables."
 }

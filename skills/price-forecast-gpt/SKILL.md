@@ -323,15 +323,15 @@ Admin → prices sheet → GitHub workflow dispatch → forecast rebuild → Pag
 스킬 파일은 GitHub에 저장된 **운영 지침**이지 ChatGPT 계정에 전역 설치된 자동 명령어가 아니다. 새 대화에서 이 저장소·스킬을 조회할 수 있는 연결/권한이 필요하다. 연결이 없으면 실행된 척하지 않는다.
 
 ### 18.2. 대상 시스템과 데이터 흐름
-1. 비공개 원본: 연결된 Google Sheets \`Price-Forecast-GPT_DB\` → \`prices\` (메타데이터 1~5행, 6행부터 날짜 역순).
-2. WTI터미널: \`jskimlam/WTI-Research-Terminal\` → \`data/wti-settlement.csv\` (\`date,settlement_usd_bbl\`, 날짜 오름차순).
-3. 예측 엔진: \`jskimlam/Price-Forecast-GPT\` → \`data/refresh-request.json\` 메타데이터 변경 → \`.github/workflows/forecast.yml\` → GitHub Pages.
+1. 비공개 원본: 연결된 Google Sheets `Price-Forecast-GPT_DB` → `prices` (메타데이터 1~5행, 6행부터 날짜 역순).
+2. WTI터미널: `jskimlam/WTI-Research-Terminal` → `data/wti-settlement.csv` (`date,settlement_usd_bbl`, 날짜 오름차순).
+3. 예측 엔진: `jskimlam/Price-Forecast-GPT` → `data/refresh-request.json` 메타데이터 변경 → `.github/workflows/forecast.yml` → GitHub Pages.
 4. 확인 사이트: https://jskimlam.github.io/WTI-Research-Terminal/ 및 https://jskimlam.github.io/Price-Forecast-GPT/
 
 **비공개 Google Sheets ID, API 키, 토큰, Platts/ICIS 원시 31열 가격, 상용 시계열을 공개 GitHub 문서·마커·로그에 복제하지 않는다.** 가격 입력은 비공개 Google Sheets에서만 한다. 공개 WTI CSV는 사용자가 공개 게시를 승인할 권리가 있는 종가 자료만 반영한다.
 
 ### 18.3. 31열 코드 순서 (A열은 AssessDate)
-\`\`\`text
+```text
 B NMCL001   C PAAAD00   D AAMFL00   E PHACB00   F AAMFI00
 G STYFC00   H AAOTU00   I AAOQP00   J AAIKW00   K AAOTM00
 L PHASM05   M AAOAX00   N AAKYD00   O AAWWK00   P PHASO05
@@ -339,20 +339,20 @@ Q PHAOO00   R AAWWM00   S AAWWL00   T BTNEA00   U AAWWU00
 V AAVCC00   W AAVCA00   X PCACG00   Y PHBIF00   Z PHAIL00
 AA PHAIR00  AB PHAHF00  AC AAUNF04  AD PHAOI00  AE PHAOK00
 AF PHAOM00
-\`\`\`
-입력표의 지표명보다 **코드**를 우선하며 시트 1행의 실제 31개 헤더와 정합성을 대조한다. 사용자가 24개 열까지만 제공해도 나머지 지표를 0이나 전일가로 채우지 않는다. 공란·전각 공백·빈 평가값은 \`null\`/실제 빈 셀로 유지한다. 수치 단위를 USD/mt, USD/bbl, USC/lb, USC/gal, CNY/mt 등 **해당 코드 원단위 그대로** 보존하고 환산·반올림하지 않는다.
+```
+입력표의 지표명보다 **코드**를 우선하며 시트 1행의 실제 31개 헤더와 정합성을 대조한다. 사용자가 24개 열까지만 제공해도 나머지 지표를 0이나 전일가로 채우지 않는다. 공란·전각 공백·빈 평가값은 `null`/실제 빈 셀로 유지한다. 수치 단위를 USD/mt, USD/bbl, USC/lb, USC/gal, CNY/mt 등 **해당 코드 원단위 그대로** 보존하고 환산·반올림하지 않는다.
 
 ### 18.4. 단일 호출 작업 절차
-1. **원본 확인:** Google Sheets 메타데이터로 실제 \`prices\` sheetId와 헤더를 얻고 최근 날짜·대상 셀을 읽는다. GitHub의 WTI CSV, 예측 마커의 SHA와 마지막 평가일도 읽는다. 누락 날짜·기존 중복·과거 보정 필요 여부를 판별한다.
-2. **날짜 확인:** 표의 \`AssessDate\`를 사용한다. \`#######\` 같은 표시 오류는 날짜 미확정으로 간주한다. 사용자가 이미 언급한 일자·현재 평가 흐름으로 **유일하게 확인되는 경우에만** 추정 날짜를 명시하고, 그렇지 않으면 필요한 날짜 하나를 묻는다. 휴장일·발표일과 평가일을 혼동하지 않는다.
+1. **원본 확인:** Google Sheets 메타데이터로 실제 `prices` sheetId와 헤더를 얻고 최근 날짜·대상 셀을 읽는다. GitHub의 WTI CSV, 예측 마커의 SHA와 마지막 평가일도 읽는다. 누락 날짜·기존 중복·과거 보정 필요 여부를 판별한다.
+2. **날짜 확인:** 표의 `AssessDate`를 사용한다. `#######` 같은 표시 오류는 날짜 미확정으로 간주한다. 사용자가 이미 언급한 일자·현재 평가 흐름으로 **유일하게 확인되는 경우에만** 추정 날짜를 명시하고, 그렇지 않으면 필요한 날짜 하나를 묻는다. 휴장일·발표일과 평가일을 혼동하지 않는다.
 3. **가격 검증:** 각 행은 날짜+31 코드에 매핑. 동일 날짜가 있으면 중복 행 삽입 대신 누락·정정된 셀만 수정한다. 동일 값은 변경 생략. 이전 확정 이력과 타 품목 값 보존. 한 날짜의 전체 31코드를 입력 표와 **셀별 재조회 비교**한다.
-4. **WTI:** \`NMCL001\`(NYMEX Light Sweet Crude Settlement Mo01)만 WTI터미널 CSV의 해당 거래일 가격으로 사용한다. \`PCACG00\`(WTI Cushing Mo01)는 **별도 지표**이며 차이를 임의로 강제로 같게 하지 않는다. 사용자 제공 \`PCACG00\`이 공란이면 빈칸 유지. 확정 종가가 바뀌면 CSV의 **그 날짜 한 행만 정정**, 미존재 최신일이면 한 행 추가. 월물 롤오버·장중 가격 혼동에 유의한다. CSV 정렬·중복 없음·기존 이력 보존·마지막 행을 검증한다.
-5. **예측 트리거:** 비공개 DB 저장·재조회 검증이 끝난 **뒤** \`data/refresh-request.json\`의 \`request_id\`를 새 값으로, \`as_of_date\`, \`source_rows\`, 실제 신규/정정 평가 건수와 미평가 코드 등 **메타데이터만** 갱신하여 푸시한다. 이 파일 변경은 \`forecast.yml\`을 실행한다. 모델의 수식이나 UI는 가격 입력만으로 임의 변경하지 않는다.
-6. **배포 검증:** WTI터미널과 예측모델 GitHub Actions를 각각 확인. 커밋 SHA에 대응하는 실행의 \`status=completed\` + \`conclusion=success\`, build·Pages deploy 성공을 구분한다. 예측 로그의 \`Source assessment rows: ... latest: YYYY-MM-DD\`가 목표 날짜인지 확인. 이력이 같고 변동이 없으면 쓸데없는 재배포는 생략한다.
+4. **WTI:** `NMCL001`(NYMEX Light Sweet Crude Settlement Mo01)만 WTI터미널 CSV의 해당 거래일 가격으로 사용한다. `PCACG00`(WTI Cushing Mo01)는 **별도 지표**이며 차이를 임의로 강제로 같게 하지 않는다. 사용자 제공 `PCACG00`이 공란이면 빈칸 유지. 확정 종가가 바뀌면 CSV의 **그 날짜 한 행만 정정**, 미존재 최신일이면 한 행 추가. 월물 롤오버·장중 가격 혼동에 유의한다. CSV 정렬·중복 없음·기존 이력 보존·마지막 행을 검증한다.
+5. **예측 트리거:** 비공개 DB 저장·재조회 검증이 끝난 **뒤** `data/refresh-request.json`의 `request_id`를 새 값으로, `as_of_date`, `source_rows`, 실제 신규/정정 평가 건수와 미평가 코드 등 **메타데이터만** 갱신하여 푸시한다. 이 파일 변경은 `forecast.yml`을 실행한다. 모델의 수식이나 UI는 가격 입력만으로 임의 변경하지 않는다.
+6. **배포 검증:** WTI터미널과 예측모델 GitHub Actions를 각각 확인. 커밋 SHA에 대응하는 실행의 `status=completed` + `conclusion=success`, build·Pages deploy 성공을 구분한다. 예측 로그의 `Source assessment rows: ... latest: YYYY-MM-DD`가 목표 날짜인지 확인. 이력이 같고 변동이 없으면 쓸데없는 재배포는 생략한다.
 7. **사용자 보고:** (a) 적용 날짜 (b) 입력·정정 건수/미평가 건수 (c) WTI 종가 및 별도 Cushing 평가 여부 (d) DB/WTI/예측모델 각각 성공 여부 (e) 사이트 및 Actions 링크 (f) 부분 실패/보정 예정값을 짧게 정리한다. 재조회 및 배포 성공 없이 "완료"라고 말하지 않는다.
 
 ### 18.5. 실패·충돌 대응
 - Google Sheets 일부 항목 저장 실패 시 **그 셀을 정확히 명시**한다. 입력값을 누락·직전가·추정가로 대체하거나 검증 성공이라 표시하지 않는다. 데이터 불완전 상태에서 예측모델 재계산은 원칙적으로 보류하고, 사용자가 부분 반영을 명시적으로 원하는 경우에만 제한사항을 밝혀 실행한다.
 - 원본 DB와 WTI CSV가 충돌하거나 최신 날짜가 다르면 두 저장소를 다시 읽고 **원본 데이터 우선**, 추정 합치기 금지. 다른 작업자가 최신 자료를 반영했을 수 있으므로 새 날짜를 무조건 삽입하지 않는다.
 - 연결 안전 검사, 인증, SHA 충돌, Pages 작업 실패 시 안전 검사를 우회하지 않는다. 성공한 단계·미완료 단계를 나눠 보고하고, 일관성 회복 가능한 정상 경로만 사용한다.
-- 이 스킬을 **읽는 것**, \`SKILL.md\`를 수정하는 것만으로 일일 자동 실행이 설정되지 않는다. 사용자의 명시적 요청 시 해당 대화에서 수행한다.
+- 이 스킬을 **읽는 것**, `SKILL.md`를 수정하는 것만으로 일일 자동 실행이 설정되지 않는다. 사용자의 명시적 요청 시 해당 대화에서 수행한다.

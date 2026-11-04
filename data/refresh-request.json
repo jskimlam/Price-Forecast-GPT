@@ -1,22 +1,21 @@
 {
   "schema": 1,
-  "request_id": "2026-11-03-daily-price-refresh",
-  "as_of_date": "2026-11-03",
+  "request_id": "2026-11-04-daily-price-refresh",
+  "as_of_date": "2026-11-04",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-11-03"
+    "2026-11-04"
   ],
-  "new_assessments": 22,
+  "new_assessments": 23,
   "missing_assessments": [
     "AAIKW00",
     "AAKYD00",
-    "PHAIL00",
-    "PHAIR00",
-    "PHAHF00",
+    "PHAOO00",
+    "PCACG00",
     "AAUNF04",
     "PHAOI00",
     "PHAOK00",
     "PHAOM00"
   ],
-  "reason": "Recalculate the existing forecasts and backtests after 22 verified privately stored 2026-11-03 price assessments. Preserve nine unassessed fields and all previous historical values. Treat NMCL001 and PCACG00 separately; do not publish licensed raw market tables."
+  "reason": "Refresh existing forecasting models and walk-forward backtests using 23 verified private assessment fields for 2026-11-04. Preserve eight missing cells and historical prices. NMCL001 WTI's unusually large day-on-day movement requires contract/month/source review; keep separate Cushing field unassessed. Commit only metadata, no licensed multi-market price data."
 }

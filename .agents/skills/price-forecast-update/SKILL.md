@@ -1,8 +1,8 @@
 ---
 name: price-forecast-update
 description: "가격예측업데이트해, 가격예측 업데이트해, 가격업데이트해: 비공개 석유화학 가격 DB의 날짜별 평가가격을 검증·반영하고 WTI터미널과 가격예측 대시보드를 재계산·배포하는 실무 스킬."
-version: 1.1
-updated: 2026-11-04
+version: 1.2
+updated: 2026-11-11
 triggers:
   - 가격예측업데이트해
   - 가격예측 업데이트해
@@ -11,6 +11,7 @@ triggers:
   - 가격업데이트해
   - 가격 업데이트해
   - /가격예측업데이트
+  - /price
 ---
 
 # 가격예측 가격업데이트 스킬
@@ -18,7 +19,7 @@ triggers:
 > **Canonical source:** `skills/price-forecast-gpt/SKILL.md` in this repository, section **18. 데일리 가격 업데이트 전용 실행 규약**. Read that file *before any changes*. This small entry is for discoverability, not a second source of truth.
 
 ## User intent
-If a user supplies a dated Platts/ICIS-style price table or says `가격예측업데이트해` / `가격업데이트해` in the project context, interpret the request as an instruction to check the current private prices DB and perform the real forecast refresh, not simply summarize prices.
+If a user supplies a dated Platts/ICIS-style price table or says `/price` / `가격예측업데이트해` / `가격업데이트해` in the project context, interpret the request as an instruction to check the current private prices DB and perform the real forecast refresh, not simply summarize prices.
 
 ## Execution checklist
 1. Read real source-of-truth state, do not reuse date, SHA, or data from old chats. Check the connected private `Price-Forecast-GPT_DB` / `prices`, actual code headers, dates and existing cells.

@@ -2,8 +2,8 @@
 name: price-forecast-gpt
 display_name: 가격예측 프로젝트
 description: Petrochemical price forecasting dashboard, model, backtest, admin workflow, capture/share and Android APK maintenance skill.
-version: 1.1
-updated: 2026-11-04
+version: 1.2
+updated: 2026-11-11
 triggers:
   - 가격예측 업데이트해
   - 가격예측업데이트해
@@ -12,6 +12,7 @@ triggers:
   - 가격업데이트해
   - 가격 업데이트해
   - /가격예측업데이트
+  - /price
   - 가격예측 스킬
   - Price Forecast GPT
   - 가격예측 프로젝트
@@ -316,7 +317,7 @@ Admin → prices sheet → GitHub workflow dispatch → forecast rebuild → Pag
 다음 요청은 사용자의 **Price-Forecast-GPT 가격 반영 작업 지시**로 해석한다:
 - "가격예측 업데이트해", "가격예측업데이트해", "가격예측 업데이트해줘", "가격 예측 업데이트해"
 - "가격업데이트해", "가격 업데이트해" (석유화학·WTI 가격표 또는 프로젝트 맥락이 있을 때)
-- "/가격예측업데이트" (문서상 별칭; ChatGPT 앱의 내장 슬래시 명령어로 등록됐다는 의미는 아님)
+- "/가격예측업데이트", **"/price"** (가격예측 업데이트를 실행하는 문서상 별칭; ChatGPT 앱의 내장 슬래시 명령어로 등록됐다는 의미는 아님)
 
 이 지시는 **질문에 대한 가격 전망을 쓰는 것**이 아니라, 실제 연결된 원본 DB와 GitHub를 읽고 필요한 변경·검증·배포를 수행하는 작업이다. 프로젝트 상태를 반드시 신규 조회한다. 예전 채팅에서의 최신일·값·SHA·실행 상태를 신뢰하지 않는다. 새 가격표가 제공되지 않았으면 우선 연결된 원본 DB가 예측 배포 기준일보다 최신인지 점검하고, 미반영된 확정 데이터가 있을 때만 배포한다. 확정 가격 없이 가상의 숫자를 생성하지 않는다.
 

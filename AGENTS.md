@@ -12,6 +12,7 @@ When a user, including in a newly started chat, writes any of:
 - `가격 예측 업데이트해`
 - `가격업데이트해` or `가격 업데이트해` in the petrochemical/WTI project context
 - `/가격예측업데이트`
+- `/price` (price-assessment update alias)
 
 read and follow **`skills/price-forecast-gpt/SKILL.md`**, especially section **18 (데일리 가격 업데이트 전용 실행 규약)**. The short alias is an instruction in this repository, **not** a registered global ChatGPT slash command.
 

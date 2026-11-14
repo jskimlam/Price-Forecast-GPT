@@ -1,25 +1,24 @@
 {
   "schema": 1,
-  "request_id": "2026-11-12-noncrude-price-refresh",
-  "as_of_date": "2026-11-12",
+  "request_id": "2026-11-13-daily-price-refresh",
+  "as_of_date": "2026-11-13",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
-    "2026-11-12"
+    "2026-11-13"
   ],
   "new_assessments": 23,
   "missing_assessments": [
-    "NMCL001",
-    "AAIKW00",
-    "AAKYD00",
     "PHAOO00",
-    "PCACG00",
     "PHAIL00",
     "PHAIR00",
-    "PHAHF00"
+    "PHAHF00",
+    "AAUNF04",
+    "PHAOI00",
+    "PHAOK00",
+    "PHAOM00"
   ],
-  "pending_assessments": [
-    "NMCL001",
-    "PCACG00"
+  "unprovided_assessment_dates": [
+    "2026-11-12 (NMCL001 only)"
   ],
-  "reason": "Rebuild forecasts and backtests from 23 verified private Nov 12 non-crude assessments. Both NYMEX WTI and WTI Cushing were excluded at user request pending subsequent crude settlement input; preserve them as blank, including the explicitly supplied-but-deferred Cushing quote. Keep history, model formulas and WTI terminal unchanged; no licensed raw assessments in public git."
+  "reason": "Rebuild existing forecasts and backtests using 23 privately verified 2026-11-13 prices. Both NMCL001 and PCACG00 independently assessed at 88.56, preserving their distinct codes. Missing evaluations remain blank, including the unprovided 2026-11-12 NYMEX WTI settlement. Preserve historical data and do not publish licensed raw multivariate tables."
 }

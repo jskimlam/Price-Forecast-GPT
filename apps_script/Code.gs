@@ -303,6 +303,13 @@ function exportPrices_(limit) {
  * ========================= */
 
 function savePriceSnapshot_(payload) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try { return savePriceSnapshotUnlocked_(payload); }
+  finally { lock.releaseLock(); }
+}
+
+function savePriceSnapshotUnlocked_(payload) {
   const dateText = normalizeDateText_(payload.date);
   if (!dateText) throw new Error('평가일자를 입력하세요.');
 
@@ -584,4 +591,79 @@ function json_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+/* Bulk import: private values stay in the bound Sheet. */
+function apiPreviewBulkPrices(token, rows) {
+  assertSession_(token);
+  const source = exportPrices_(0);
+  const codes = source.meta.codes || [];
+  const labels = source.meta.labels || [];
+  const allowed = new Set(codes.slice(1).filter(Boolean));
+  const ignored = new Set();
+  validateBulkRows_(rows);
+  const history = source.rows.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  return {ok:true, rows:rows.map(row=>{
+    const current = history.find(r=>r.date===row.date) || {};
+    const cells = [];
+    Object.keys(row.values).forEach(code=>{
+      if(!allowed.has(code)){ignored.add(code);return;}
+      const value = row.values[code];
+      const existing = current[code] == null || current[code] === '' ? null : Number(current[code]);
+      const prior = history.find(r=>r.date<row.date && r[code]!=null && r[code]!=='');
+      cells.push({code, label:labels[codes.indexOf(code)] || code, value, existing,
+        previous:prior?Number(prior[code]):null, previousDate:prior?prior.date:'',
+        status:existing===null?'new':existing===value?'same':'changed'});
+    });
+    return {date:row.date,cells};
+  }), ignored:Array.from(ignored)};
+}
+function validateBulkRows_(rows) {
+  if(!Array.isArray(rows)||!rows.length||rows.length>100) throw new Error('1~100개 날짜를 입력하세요.');
+  const seen = new Set();
+  rows.forEach(row=>{
+    const date=normalizeDateText_(row.date);
+    if(!date || dateToText_(parseDate_(date))!==date) throw new Error('유효하지 않은 날짜입니다.');
+    if(seen.has(date)) throw new Error('중복 날짜: '+date);
+    seen.add(date);
+    if(!row.values || typeof row.values!=='object' || Array.isArray(row.values)) throw new Error('가격 형식을 확인하세요.');
+    Object.keys(row.values).forEach(code=>{
+      if(typeof row.values[code]!=='number'||!Number.isFinite(row.values[code])) throw new Error(code+'의 숫자를 확인하세요.');
+    });
+  });
+}
+function apiSaveBulkPrices(token, rows) {
+  assertSession_(token);
+  validateBulkRows_(rows);
+  const lock=LockService.getScriptLock();
+  lock.waitLock(30000);
+  const saved=[];
+  try {
+    const sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(APP.PRICE_SHEET);
+    const codes=new Set(sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0].slice(1));
+    // Validate every selected cell before the first write.
+    rows.forEach(row=>{
+      if(!Object.keys(row.values).length) throw new Error('선택한 값이 없습니다.');
+      const current=getPriceSnapshot_(row.date).values;
+      Object.keys(row.values).forEach(code=>{
+        if(!codes.has(code)) throw new Error('시트에 없는 코드: '+code);
+        const actual=current[code]==null||current[code]===''?null:Number(current[code]);
+        if(!row.expected || !Object.prototype.hasOwnProperty.call(row.expected,code) || actual!==row.expected[code])
+          throw new Error(row.date+' '+code+' 값이 변경되었습니다. 미리보기를 다시 만드세요.');
+      });
+    });
+    for(const row of rows){
+      const result=savePriceSnapshotUnlocked_(row);
+      const check=getPriceSnapshot_(row.date).values;
+      Object.keys(row.values).forEach(code=>{
+        if(check[code]!==row.values[code]) throw new Error(row.date+' '+code+' 저장 검증 실패');
+      });
+      saved.push(result);
+    }
+  } catch(err) {
+    return {ok:false,saved,error:String(err.message||err)};
+  } finally { lock.releaseLock(); }
+  let dispatch;
+  try {dispatch=dispatchForecast_('admin_bulk_save');}
+  catch(err){dispatch={ok:false,error:String(err.message||err)};}
+  return {ok:true,saved,dispatch};
 }

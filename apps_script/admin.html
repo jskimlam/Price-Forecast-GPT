@@ -17,6 +17,18 @@
     body{min-height:100vh}
     button,input,select{font:inherit}
     button{cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .bulk{margin-bottom:16px}
+    .bulk textarea{width:100%;min-height:150px;resize:vertical;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:12px/1.6 monospace;white-space:pre;overflow:auto}
+    .bulk p{font-size:12px;line-height:1.7;color:var(--muted)}
+    .bulk-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+    .bulk-scroll{overflow:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px}
+    .bulk table{width:100%;border-collapse:collapse;min-width:640px;font-size:12px}
+    .bulk th,.bulk td{padding:10px;text-align:right;border-bottom:1px solid var(--line)}
+    .bulk th:first-child,.bulk td:first-child{text-align:left}
+    .bulk th{color:var(--muted);font-weight:600}
+    .bulk h3{font-size:14px;margin-top:20px}
+    #bulkStatus{white-space:pre-line;font-size:12px;line-height:1.7}
     .hidden{display:none!important}
     .shell{max-width:1540px;margin:0 auto;padding:18px}
     .topbar{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;margin-bottom:16px;background:rgba(6,16,31,.88);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
@@ -90,7 +102,7 @@
     }
     @media(max-width:430px){
       .shell{padding:7px}.topbar{border-radius:12px}.logo{width:36px;height:36px;border-radius:10px}
-      .actions{width:100%;justify-content:stretch}.actions .btn{flex:1}.topbar{flex-wrap:wrap}
+      .actions{width:100%;justify-content:stretch}.actions .btn{flex:1 0 auto;white-space:nowrap}.topbar{flex-wrap:wrap}
       .price-grid{grid-template-columns:1fr 1fr;gap:7px}.price-card{padding:9px}.price-card .name{font-size:10px;height:29px}
       .toolbar{display:grid;grid-template-columns:1fr 1fr}.toolbar .btn{width:100%}
     }
@@ -134,6 +146,22 @@
       <div class="stat"><div class="label">FORECAST TARGETS</div><div id="statTargets" class="value">-</div></div>
       <div class="stat"><div class="label">MARKET VARIABLES</div><div id="statVars" class="value">-</div></div>
       <div class="stat"><div class="label">MODEL</div><div id="statModel" class="value">ensemble-v1</div></div>
+    </section>
+
+    <section class="panel bulk">
+      <div class="panel-head"><div><div class="kicker">Bulk Price Update</div><h2>표 통째로 붙여넣기 (날짜 자동 인식)</h2></div></div>
+      <div class="panel-body">
+        <p id="bulkHelp">엑셀에서 코드 행부터 날짜·가격 행까지 복사해 붙여넣으세요. 여러 날짜와 Markdown 표도 지원합니다. 빈칸과 시트에 없는 코드는 건너뜁니다. 기존 값은 기본 선택하지 않으며 체크한 값만 저장합니다. 소수점이 보이도록 복사하세요.</p>
+        <label for="bulkText" class="small muted">가격표</label>
+        <textarea id="bulkText" aria-describedby="bulkHelp" placeholder="AssessDate와 품목 코드가 포함된 표를 붙여넣으세요" oninput="invalidateBulk()"></textarea>
+        <div class="bulk-actions">
+          <button id="bulkPreviewButton" class="btn" onclick="previewBulk()">미리보기 다시 만들기</button>
+          <button id="bulkSaveButton" class="btn primary" onclick="saveBulk()" disabled>선택한 값 저장 + 예측 (0개)</button>
+          <button id="bulkClearButton" class="btn ghost" onclick="clearBulk()">비우기</button>
+        </div>
+        <div id="bulkStatus" role="status" aria-live="polite"></div>
+        <div id="bulkPreview"></div>
+      </div>
     </section>
 
     <div class="grid">
@@ -183,6 +211,10 @@
   <div id="toast" class="toast"></div>
 
 <script>
+let BULK = null;
+let BULK_BUSY = false;
+let bulkTimer;
+let bulkRevision = 0;
 let TOKEN = sessionStorage.getItem('pf_session') || '';
 let STATE = {variables:[], targets:[], snapshot:{values:{}}, activeGroup:'TARGETS'};
 
@@ -317,8 +349,8 @@ async function refreshAll(){
   catch(e){handleError(e)}finally{ready()}
 }
 
-function busy(text){$('saveState').textContent=text;$('saveState').className='badge warn'}
-function ready(){$('saveState').textContent='READY';$('saveState').className='badge ok'}
+function busy(text){document.querySelectorAll('button').forEach(b=>b.disabled=true);$('saveState').textContent=text;$('saveState').className='badge warn'}
+function ready(){document.querySelectorAll('button').forEach(b=>b.disabled=false);updateBulkCount();$('saveState').textContent='READY';$('saveState').className='badge ok'}
 function handleError(e){
   if(String(e.message).includes('SESSION_EXPIRED')){
     TOKEN='';sessionStorage.removeItem('pf_session');location.reload();return;
@@ -330,8 +362,108 @@ function toast(msg,error=false){
   clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className='toast',3600);
 }
 function todayKst(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
-function fmt(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(n):esc(String(v))}
+function fmt(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:20}).format(n):esc(String(v))}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function cleanBulkCell(value){
+  return String(value??'').replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&nbsp;/gi,' ').trim();
+}
+function bulkDate(value){
+  const m=cleanBulkCell(value).match(/^(\d{4})[-/.]\s*(\d{1,2})[-/.]\s*(\d{1,2})\.?$/);
+  if(!m) return null;
+  const y=+m[1],mo=+m[2],d=+m[3],date=new Date(Date.UTC(y,mo-1,d));
+  if(date.getUTCFullYear()!==y||date.getUTCMonth()!==mo-1||date.getUTCDate()!==d) throw new Error('유효하지 않은 날짜: '+value);
+  return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+}
+function parseBulkTable(text){
+  const lines=String(text).replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const matrix=lines.map(line=>{
+    if(line.includes('\t')) return line.split('\t').map(cleanBulkCell);
+    if(line.includes('|')) return line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cleanBulkCell);
+    throw new Error('열 구분을 찾지 못했습니다. 엑셀 표를 탭 구분 그대로 복사하거나 Markdown 표를 사용하세요.');
+  });
+  const codePattern=/^[A-Z]{2,6}\d{2,3}$/;
+  const headerIndex=matrix.findIndex(r=>r.some(c=>codePattern.test(c)));
+  if(headerIndex<0) throw new Error('품목 코드 행을 포함해서 복사하세요.');
+  const header=matrix[headerIndex];
+  const codes=header.map((code,col)=>({code,col})).filter(x=>codePattern.test(x.code));
+  if(new Set(codes.map(x=>x.code)).size!==codes.length) throw new Error('중복 품목 코드가 있습니다.');
+  if(codes.some(x=>x.col===0)) throw new Error('날짜 열을 포함해서 복사하세요.');
+  const rows=[],seen=new Set();
+  for(const cells of matrix.slice(headerIndex+1)){
+    const date=bulkDate(cells[0]);
+    if(!date){
+      if(/^\d{4}[-/.]|^#+$/.test(cells[0])) throw new Error('평가일자를 확인하세요: '+cells[0]);
+      continue;
+    }
+    if(seen.has(date)) throw new Error('중복 날짜가 있습니다: '+date);
+    seen.add(date);
+    if(cells.length!==header.length) throw new Error(date+'의 열 개수가 코드 행과 다릅니다. 빈칸을 포함한 전체 영역을 복사하세요.');
+    const values={};
+    for(const {code,col} of codes){
+      const raw=cells[col];
+      if(raw==='') continue;
+      if(!/^[+-]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(raw)) throw new Error(date+' '+code+': 숫자를 확인하세요 ('+raw+')');
+      const n=Number(raw.replace(/,/g,''));
+      if(!Number.isFinite(n)) throw new Error(code+': 숫자 범위를 확인하세요.');
+      values[code]=n;
+    }
+    rows.push({date,values});
+  }
+  if(!rows.length) throw new Error('평가 날짜와 가격 행을 찾지 못했습니다.');
+  if(rows.length>100) throw new Error('한 번에 최대 100개 날짜까지 입력하세요.');
+  return rows.sort((a,b)=>a.date.localeCompare(b.date));
+}
+function invalidateBulk(){
+  bulkRevision++;BULK=null;clearTimeout(bulkTimer);$('bulkPreview').innerHTML='';updateBulkCount();
+  $('bulkStatus').textContent='';
+  if($('bulkText').value.trim()) bulkTimer=setTimeout(previewBulk,650);
+}
+function clearBulk(){if(BULK_BUSY)return;$('bulkText').value='';invalidateBulk()}
+function updateBulkCount(){
+  const n=document.querySelectorAll('#bulkPreview input:checked:not(:disabled)').length;
+  $('bulkSaveButton').textContent=`선택한 값 저장 + 예측 (${n}개)`;
+  $('bulkSaveButton').disabled=BULK_BUSY||!BULK||!n;
+}
+async function previewBulk(){
+  if(BULK_BUSY)return;
+  clearTimeout(bulkTimer);const revision=++bulkRevision;BULK=null;updateBulkCount();
+  try{
+    const rows=parseBulkTable($('bulkText').value);
+    $('bulkStatus').textContent='시트의 기존 값과 직전 가격을 확인 중입니다…';
+    const result=await gas('apiPreviewBulkPrices',TOKEN,rows);
+    if(revision!==bulkRevision)return;
+    BULK=result;
+    $('bulkStatus').textContent=`${result.rows.length}개 날짜 · 빈칸 건너뜀${result.ignored.length?' · 시트에 없는 코드: '+result.ignored.join(', '):''}`;
+    $('bulkPreview').innerHTML=result.rows.map((row,ri)=>`<h3>${esc(row.date)} <span class="small muted">신규 ${row.cells.filter(c=>c.status==='new').length} · 같은 값 ${row.cells.filter(c=>c.status==='same').length} · 확인 필요 ${row.cells.filter(c=>c.status==='changed').length}</span></h3><div class="bulk-scroll"><table><thead><tr><th>품목 / 코드</th><th>시트 기존 / 직전</th><th>붙여넣은 값</th><th>변화</th><th>저장</th></tr></thead><tbody>${row.cells.map((c,ci)=>{
+      const baseline=c.existing!==null?c.existing:c.previous;
+      const change=baseline!==null&&baseline!==0?(c.value-baseline)/Math.abs(baseline)*100:null;
+      return `<tr><td>${esc(c.label)}<br><span class="small muted">${esc(c.code)}</span></td><td>${baseline===null?'—':fmt(baseline)}<br><span class="small muted">${esc(c.existing!==null?'같은 날짜':c.previousDate||'')}</span></td><td>${fmt(c.value)}</td><td>${change===null?'—':(change>0?'+':'')+change.toFixed(1)+'%'}</td><td><label><input type="checkbox" data-row="${ri}" data-cell="${ci}" onchange="updateBulkCount()" ${c.status==='new'?'checked':''} ${c.status==='same'?'disabled':''} aria-label="${esc(row.date+' '+c.code+' 저장')}"> ${c.status==='new'?'신규':c.status==='same'?'동일':'덮어쓰기'}</label></td></tr>`;
+    }).join('')}</tbody></table></div>`).join('');
+    updateBulkCount();
+  }catch(e){if(revision!==bulkRevision)return;$('bulkStatus').textContent=e.message;$('bulkPreview').innerHTML='';updateBulkCount()}
+}
+async function saveBulk(){
+  if(BULK_BUSY||!BULK)return;
+  const selected=new Map();
+  document.querySelectorAll('#bulkPreview input:checked:not(:disabled)').forEach(input=>{
+    const row=BULK.rows[+input.dataset.row],cell=row.cells[+input.dataset.cell];
+    if(!selected.has(row.date))selected.set(row.date,{date:row.date,values:{},expected:{}});
+    selected.get(row.date).values[cell.code]=cell.value;
+    selected.get(row.date).expected[cell.code]=cell.existing;
+  });
+  if(!selected.size)return;
+  BULK_BUSY=true;busy('SAVING');$('bulkText').disabled=true;
+  $('bulkStatus').textContent=`${selected.size}개 날짜 저장 및 재조회 검증 중…`;
+  try{
+    const r=await gas('apiSaveBulkPrices',TOKEN,Array.from(selected.values()));
+    BULK=null;$('bulkPreview').innerHTML='';
+    const saved=r.saved.map(x=>x.date+' · '+x.updatedCodes+'개').join('\n');
+    $('bulkStatus').textContent=(saved?'저장·검증 완료\n'+saved+'\n':'')+(r.error?'중단: '+r.error+'\n미리보기를 다시 만들어 남은 값을 확인하세요.':r.dispatch&&r.dispatch.ok?'예측 실행 요청 완료. 대시보드는 배포 완료 후 갱신됩니다.':'가격 저장 완료. 예측 요청 실패: '+((r.dispatch&&r.dispatch.error)||'확인 필요')+' · 상단 예측 실행으로 다시 요청하세요.');
+    await bootstrap();
+  }catch(e){BULK=null;$('bulkPreview').innerHTML='';$('bulkStatus').textContent='저장 결과 확인 필요: '+e.message+'\n미리보기를 다시 만들어 시트의 저장 상태를 확인하세요.'}
+  finally{BULK_BUSY=false;$('bulkText').disabled=false;ready()}
+}
+
 </script>
 </body>
 </html>

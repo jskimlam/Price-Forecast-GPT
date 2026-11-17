@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "request_id": "2026-11-16-noncrude-daily-price-refresh",
+  "request_id": "2026-11-16-wti-settlement-addendum-8572",
   "as_of_date": "2026-11-16",
   "data_source": "Price-Forecast-GPT_DB / prices",
   "source_rows": [
     "2026-11-16"
   ],
-  "new_assessments": 19,
+  "new_assessments": 1,
+  "total_assessments_on_date": 20,
   "missing_assessments": [
-    "NMCL001",
     "AAIKW00",
     "AAKYD00",
     "PHAOO00",
@@ -22,8 +22,7 @@
     "PHAOM00"
   ],
   "pending_assessments": [
-    "NMCL001",
     "PCACG00"
   ],
-  "reason": "Rebuild the existing forecasts and backtests using 19 verified 2026-11-16 non-crude assessments privately stored in Google Sheets. NYMEX WTI and WTI Cushing were not supplied; leave both blank until user supplies crude later. Keep 12 missing assessment fields blank; preserve historical data, model formulas and UI. Do not touch the WTI Research Terminal or publish licensed multi-commodity raw prices."
+  "reason": "Recompute forecasts and backtests after inserting user-confirmed Nov 16 NYMEX WTI settlement into private Sheet. Preserve 19 previously verified non-crude fields, all past history, all missing fields, and model code/UI. WTI Cushing is a separate indicator and remains unassessed. Publish only metadata."
 }

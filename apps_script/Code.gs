@@ -646,8 +646,10 @@ function apiSaveBulkPrices(token, rows) {
       const current=getPriceSnapshot_(row.date).values;
       Object.keys(row.values).forEach(code=>{
         if(!codes.has(code)) throw new Error('시트에 없는 코드: '+code);
-        const actual=current[code]==null||current[code]===''?null:Number(current[code]);
-        if(!row.expected || !Object.prototype.hasOwnProperty.call(row.expected,code) || actual!==row.expected[code])
+        const actual=current[code]==null||current[code]===''?'blank':'number:'+String(Number(current[code]));
+        if(!row.expected || !Object.prototype.hasOwnProperty.call(row.expected,code) || typeof row.expected[code]!=='string')
+          throw new Error('입력 화면을 새로고침한 뒤 미리보기를 다시 만드세요.');
+        if(actual!==row.expected[code])
           throw new Error(row.date+' '+code+' 값이 변경되었습니다. 미리보기를 다시 만드세요.');
       });
     });

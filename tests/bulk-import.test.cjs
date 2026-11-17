@@ -24,13 +24,22 @@ test('bulk writes selected cells only; verifies before one forecast dispatch; de
  server.getPriceSnapshot_=date=>({values:db[date]||{}});
  server.savePriceSnapshotUnlocked_=row=>{writes++;db[row.date]={...(db[row.date]||{}),...row.values};return {date:row.date,updatedCodes:Object.keys(row.values).length};};
  server.dispatchForecast_=()=>{dispatches++;return {ok:true};};
- const rows=[{date:'2025-01-02',values:{PAAAD00:12},expected:{PAAAD00:null}},{date:'2025-01-03',values:{NMCL001:22},expected:{NMCL001:null}}];
+ const rows=[{date:'2025-01-02',values:{PAAAD00:12},expected:{PAAAD00:'blank'}},{date:'2025-01-03',values:{NMCL001:22},expected:{NMCL001:'blank'}}];
  assert.equal(server.apiSaveBulkPrices('t',rows).ok,true);assert.equal(writes,2);assert.equal(dispatches,1);assert.equal(db['2025-01-02'].NMCL001,undefined);
  assert.equal(server.apiSaveBulkPrices('t',rows).ok,false);assert.equal(writes,2);assert.equal(dispatches,1);
 });
 test('partial write failure never dispatches and returns completed dates',()=>{
  let writes=0,dispatches=0,db={};server.getPriceSnapshot_=date=>({values:db[date]||{}});
  server.savePriceSnapshotUnlocked_=r=>{if(++writes===2)throw new Error('storage failure');db[r.date]=r.values;return {date:r.date,updatedCodes:1};};server.dispatchForecast_=()=>{dispatches++;};
- const r=server.apiSaveBulkPrices('t',[{date:'2025-01-01',values:{PAAAD00:1},expected:{PAAAD00:null}},{date:'2025-01-02',values:{PAAAD00:2},expected:{PAAAD00:null}}]);
+ const r=server.apiSaveBulkPrices('t',[{date:'2025-01-01',values:{PAAAD00:1},expected:{PAAAD00:'blank'}},{date:'2025-01-02',values:{PAAAD00:2},expected:{PAAAD00:'blank'}}]);
  assert.equal(r.ok,false);assert.equal(r.saved.length,1);assert.equal(dispatches,0);
+});
+test('blank baselines survive transport; numeric and zero conflicts remain protected',()=>{
+ let db={PAAAD00:0},writes=0;server.getPriceSnapshot_=()=>({values:db});
+ server.savePriceSnapshotUnlocked_=r=>{writes++;db={...db,...r.values};return {date:r.date,updatedCodes:1};};server.dispatchForecast_=()=>({ok:true});
+ const send=expected=>server.apiSaveBulkPrices('t',JSON.parse(JSON.stringify([{date:'2025-01-01',values:{PAAAD00:2},expected:{PAAAD00:expected}}])));
+ assert.equal(send('blank').ok,false);assert.equal(writes,0);
+ assert.equal(send(null).ok,false);assert.equal(writes,0);
+ assert.equal(send('number:0').ok,true);assert.equal(writes,1);
+ assert.equal(send('number:0').ok,false);assert.equal(writes,1);
 });
